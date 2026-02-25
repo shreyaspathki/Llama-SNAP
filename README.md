@@ -1,4 +1,4 @@
-# SNAP: Smart Neural Accessibility Platform
+# SNAP: simplify, narrate, adapt & personalise
 
 SNAP is an intelligent browser extension designed to make the web more accessible for users with cognitive disabilities, language barriers, or reading difficulties. It leverages a fine-tuned Local Large Language Model (LLM) to simplify complex text, explain concepts, and provide translations in real-time, while ensuring privacy by processing data locally or through a secure gateway.
 
