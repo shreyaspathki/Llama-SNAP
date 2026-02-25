@@ -1,0 +1,2 @@
+# Initialising LLAMA-SNAP project
+
