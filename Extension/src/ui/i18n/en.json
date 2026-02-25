@@ -1,0 +1,22 @@
+{
+  "simplify": "Simplify",
+  "explain": "Explain",
+  "summarize": "Summarize",
+  "expand": "Expand",
+  "translate": "Translate",
+  "translateHindi": "Hindi",
+  "translateKannada": "Kannada",
+  "readAloud": "Read Aloud",
+  "stop": "Stop",
+  "rate": "Rate",
+  "pitch": "Pitch",
+  "easyRead": "Easy Read",
+  "dyslexia": "Dyslexia Font",
+  "contrast": "High Contrast",
+  "focus": "Focus Mode",
+  "ruler": "Reading Ruler",
+  "size": "Size",
+  "dock": "Dock",
+  "undock": "Undock",
+  "close": "Close"
+}

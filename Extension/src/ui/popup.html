@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en" aria-label="SNAP Popup">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SNAP</title>
+  <link rel="stylesheet" href="popup.css" />
+  <link rel="stylesheet" href="popup-chat.css" />
+</head>
+<body>
+  <div id="popup-wrap" class="wrap" role="dialog" aria-modal="true">
+    <button id="speak-chat-btn" class="hidden" title="Read Answer">🔈</button>
+    <button id="expand-chat-btn" class="hidden" title="Expand Chat">+</button>
+    <header class="hd">
+      <div class="logo">SNAP</div>
+      <select id="lang" aria-label="Language Selector">
+        <option value="en">English</option>
+        <option value="hi">हिंदी</option>
+        <option value="kn">ಕನ್ನಡ</option>
+      </select>
+    </header>
+    <main class="main" aria-label="Controls">
+      <!-- Tabs for Navigation -->
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="tools">Tools</button>
+        <button class="tab-btn" data-tab="chat">Chat Assistant</button>
+      </div>
+
+      <!-- Existing Tools Section -->
+      <div id="tab-tools" class="tab-content active">
+        <section class="row">
+          <label class="label">UI Mode</label>
+          <label><input type="radio" name="uimode" value="popup" checked> Popup</label>
+          <label><input type="radio" name="uimode" value="overlay"> Overlay Toolbar</label>
+        </section>
+      <section class="row">
+        <button id="open-overlay">Open Overlay</button>
+      </section>
+      <section class="row">
+        <button id="simplify">Simplify</button>
+        <button id="explain">Explain</button>
+        <button id="summarize">Summarize</button>
+        <button id="expand">Expand</button>
+        <div class="group">
+          <button id="translate">Translate</button>
+          <select id="translate-lang">
+            <option value="hi">Hindi</option>
+            <option value="kn">Kannada</option>
+          </select>
+        </div>
+      </section>
+      <section class="row">
+        <div class="group">
+          <button id="read">Read Aloud</button>
+          <button id="stop">Stop</button>
+        </div>
+        <div class="group">
+          <label>Rate</label>
+          <input id="rate" type="range" min="0.8" max="1.6" step="0.05" value="1">
+          <label>Pitch</label>
+          <input id="pitch" type="range" min="0.8" max="1.6" step="0.05" value="1">
+        </div>
+      </section>
+      <section class="row">
+        <label><input id="easy" type="checkbox"> Easy Read</label>
+        <label><input id="dys" type="checkbox"> Dyslexia Font</label>
+        <label><input id="contrast" type="checkbox"> High Contrast</label>
+        <label><input id="focus" type="checkbox"> Focus Mode</label>
+        <label><input id="ruler" type="checkbox"> Reading Ruler</label>
+      </section>
+      <section class="row">
+        <label>Size</label>
+        <input id="size" type="range" min="0.8" max="1.8" step="0.05" value="1">
+      </section>
+      </div> <!-- End of tab-tools -->
+
+      <!-- New Chat Assistant Section -->
+      <div id="tab-chat" class="tab-content" style="display:none;">
+        <div class="chat-container">
+          <div id="chat-history" class="chat-history"></div>
+          <div class="chat-controls">
+            <input type="text" id="chat-input" placeholder="Ask something..." />
+            <button id="chat-mic" class="mic-btn" title="Speak to Chat">🎤</button>
+            <button id="chat-send">Send</button>
+          </div>
+        </div>
+      </div>
+    </main>
+    <footer class="ft">
+      <a href="options.html" target="_blank">Options</a>
+    </footer>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

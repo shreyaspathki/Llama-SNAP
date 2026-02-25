@@ -1,0 +1,14 @@
+__pycache__
+*.pyc
+.git
+.env
+venv
+env
+llamaenv
+node_modules
+.DS_Store
+# Exclude model artifacts from build context to keep image build fast
+# We mount them as volumes instead
+model_artifacts/
+llama3.2-3b-instruct/
+dataset/

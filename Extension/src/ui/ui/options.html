@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en" aria-label="SNAP Options">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SNAP Options</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;font-family:system-ui,Arial;background:linear-gradient(135deg,#0f1220,#1e2448);color:#e6e9ff}
+    .wrap{max-width:720px;margin:20px auto;padding:16px;border:1px solid #39406b;border-radius:14px;background:#121634}
+    h1{margin-top:0}
+    label{display:flex;gap:8px;align-items:center;margin:8px 0}
+    input,select{background:#2a315b;color:#dfe3ff;border:1px solid #3b4271;border-radius:10px;padding:8px}
+    button{background:#2a315b;color:#dfe3ff;border:1px solid #3b4271;border-radius:10px;padding:10px 12px;cursor:pointer}
+    button:hover{background:#36407a}
+    .desc{font-size:.95em;opacity:.9}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>SNAP Settings</h1>
+    <p class="desc">All AI requests are routed via the background service worker. Content scripts never receive your API key. If privacy mode is enabled, only selected text is sent to AI providers.</p>
+
+    <h2>AI Provider</h2>
+    <label>
+      Provider
+      <select id="provider">
+        <option value="mock">Mock (offline)</option>
+        <option value="gemini">Gemini API</option>
+      </select>
+    </label>
+    <label>
+      Gemini API Key
+      <input id="apiKey" type="password" placeholder="Enter API key" aria-label="Gemini API Key" />
+    </label>
+    <label>
+      Model Name
+      <input id="model" type="text" value="gemini-1.5-flash" />
+    </label>
+    <label>
+      Max Tokens
+      <input id="maxTokens" type="number" min="64" max="2048" value="512" />
+    </label>
+    <label>
+      <input id="privacy" type="checkbox"> Only send selected text
+    </label>
+    <div style="margin-top:12px; display:flex; gap:8px;">
+      <button id="save">Save</button>
+      <span id="status" aria-live="polite"></span>
+    </div>
+  </div>
+  <script src="options.js"></script>
+</body>
+</html>

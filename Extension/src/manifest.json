@@ -1,0 +1,57 @@
+{
+  "manifest_version": 3,
+  "name": "SNAP - Smart Navigation and Accessibility Platform",
+  "description": "AI-powered web accessibility with popup and floating overlay toolbar. Minimal, futuristic, accessibility-first.",
+  "version": "1.0.0",
+  "action": {
+    "default_title": "SNAP",
+    "default_popup": "index.html"
+  },
+  "options_page": "options.html",
+  "icons": {
+    "16": "assets/icon-16.png",
+    "32": "assets/icon-32.png",
+    "48": "assets/icon-48.png",
+    "128": "assets/icon-128.png"
+  },
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "tabs",
+    "downloads"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content/content-script.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "assets/*",
+        "ui/i18n/*.json",
+        "*.js",
+        "*.css"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "commands": {
+    "toggle-overlay": {
+      "suggested_key": {
+        "default": "Alt+X"
+      },
+      "description": "Toggle SNAP overlay"
+    }
+  }
+}

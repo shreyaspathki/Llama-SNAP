@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en" aria-label="SNAP Options">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SNAP Options</title>
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,Arial;background:#ECFDF5;color:#064E3B}
+    .wrap{max-width:720px;margin:20px auto;padding:16px;border:1px solid #86EFAC;border-radius:14px;background:#F0FDF4}
+    h1{margin-top:0;color:#064E3B}
+    label{display:flex;gap:8px;align-items:center;margin:8px 0;color:#14532D}
+    input,select{background:#F0FDF4;color:#14532D;border:1px solid #86EFAC;border-radius:10px;padding:8px}
+    input[type=checkbox]{accent-color:#4ADE80}
+    button{background:#16A34A;color:#ECFDF5;border:1px solid #4ADE80;border-radius:10px;padding:10px 12px;cursor:pointer}
+    button:hover{background:#15803D}
+    button:disabled{background:#A7F3D0;color:#14532D;border-color:#A7F3D0;cursor:not-allowed}
+    select:focus, input:focus, button:focus{outline:none; box-shadow:0 0 0 2px #4ADE80}
+    .desc{font-size:.95em;color:#14532D}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>SNAP Settings</h1>
+    <p class="desc">All AI requests are routed via the background service worker. Content scripts never receive your API key. If privacy mode is enabled, only selected text is sent to AI providers.</p>
+
+    <h2>AI Provider</h2>
+    <label>
+      Provider
+      <select id="provider">
+        <option value="gateway">Local Llama Gateway (Port 8000) - Recommended</option>
+        <option value="groq_only">Groq Only (Cloud)</option>
+        <option value="ollama">Local Ollama (Direct)</option>
+        <option value="mock">Mock (offline)</option>
+      </select>
+    </label>
+    
+    <div id="gateway-opts" class="opts-group">
+      <label>
+        Gateway URL
+        <input id="gatewayUrl" type="text" placeholder="http://localhost:8000/v1/generate" />
+      </label>
+      <label>
+        Force Provider Strategy
+        <select id="forceStrategy">
+          <option value="local">Local Llama (Fine-tuned)</option>
+          <option value="groq">Groq (Cloud)</option>
+          <option value="">Auto (Server Default)</option>
+        </select>
+      </label>
+    </div>
+
+    <div id="ollama-opts" class="opts-group">
+      <label>
+        Model Name / Tag
+        <input id="ollamaModel" type="text" placeholder="llama3.2:3b" />
+      </label>
+    </div>
+
+    <div id="gemini-opts" class="opts-group">
+      <label>
+        Gemini API Key
+        <input id="apiKey" type="password" placeholder="Enter API key" aria-label="Gemini API Key" />
+      </label>
+      <label>
+        Gemini Model
+        <input id="geminiModel" type="text" value="gemini-1.5-flash" />
+      </label>
+    </div>
+    <label>
+      Max Tokens
+      <input id="maxTokens" type="number" min="64" max="2048" value="512" />
+    </label>
+    <label>
+      <input id="privacy" type="checkbox"> Only send selected text
+    </label>
+    <div style="margin-top:12px; display:flex; gap:8px;">
+      <button id="save">Save</button>
+      <span id="status" aria-live="polite"></span>
+    </div>
+  </div>
+  <script src="options.js"></script>
+</body>
+</html>

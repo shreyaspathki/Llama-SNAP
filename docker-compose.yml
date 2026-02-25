@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  # The Backend API Service
+  api:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: smart-accessibility-api
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount the source code for hot-reloading (development mode)
+      - ./gateway:/app/gateway
+      
+      # Mount the huge model files (so we don't copy them into the image)
+      # 1. Base Model (Llama 3.2 3B)
+      - ./llama3.2-3b-instruct:/app/llama3.2-3b-instruct
+      
+      # 2. Fine-Tuned Adapter (LoRA)
+      - ./model_artifacts:/app/model_artifacts
+    environment:
+      # Tell the app where the models are inside the container
+      - LOCAL_MODEL_PATH=/app/llama3.2-3b-instruct
+      - LOCAL_ADAPTER_PATH=/app/model_artifacts/llama-lora-v2
+      
+      # Server Config
+      - HOST=0.0.0.0
+      - PORT=8000
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+    # Use the same command as local dev: uvicorn with reload
+    command: uvicorn gateway.app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Optional: Serve the Extension Frontend
+  # This makes the "dist" folder available at http://localhost:8080
+  extension-host:
+    image: nginx:alpine
+    container_name: smart-accessibility-ext
+    ports:
+      - "8080:80"
+    volumes:
+      - ./EXT/dist:/usr/share/nginx/html
+    restart: unless-stopped

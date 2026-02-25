@@ -1,0 +1,25 @@
+# Ignore Large Model Files
+llama3.2-3b-instruct/
+model_artifacts/
+*.gguf
+*.bin
+*.pth
+
+# Ignore Datasets
+dataset/
+pat.txt
+# Ignore Environment & Secrets
+.env
+.venv
+venv/
+__pycache__/
+*.pyc
+
+# Ignore Build Artifacts
+**/node_modules/
+**/dist/
+**/build/
+.DS_Store
+
+# ignore figma files for UI 
+Accessibility\ Chrome\ Extension\ UI\ 1/

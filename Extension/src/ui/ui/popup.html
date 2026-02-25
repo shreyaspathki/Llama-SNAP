@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en" aria-label="SNAP Popup">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SNAP</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="wrap" role="dialog" aria-modal="true">
+    <header class="hd">
+      <div class="logo">SNAP</div>
+      <select id="lang" aria-label="Language Selector">
+        <option value="en">English</option>
+        <option value="hi">हिंदी</option>
+        <option value="kn">ಕನ್ನಡ</option>
+      </select>
+      <span id="status" aria-live="polite" style="margin-left:auto;font-size:12px;opacity:0.9"></span>
+    </header>
+    <main class="main" aria-label="Controls">
+      <section class="row">
+        <label class="label">UI Mode</label>
+        <label><input type="radio" name="uimode" value="popup" checked> Popup</label>
+        <label><input type="radio" name="uimode" value="overlay"> Overlay Toolbar</label>
+      </section>
+      <section class="row">
+        <button id="open-overlay">Open Overlay</button>
+        <button id="toggle-overlay">Toggle Overlay</button>
+      </section>
+      <section class="row">
+        <button id="simplify">Simplify</button>
+        <button id="explain">Explain</button>
+        <button id="expand">Expand</button>
+        <div class="group">
+          <button id="translate">Translate</button>
+          <select id="translate-lang">
+            <option value="hi">Hindi</option>
+            <option value="kn">Kannada</option>
+          </select>
+        </div>
+      </section>
+      <section class="row">
+        <div class="group">
+          <button id="read">Read Aloud</button>
+          <button id="stop">Stop</button>
+        </div>
+        <div class="group">
+          <label>Rate</label>
+          <input id="rate" type="range" min="0.8" max="1.6" step="0.05" value="1">
+          <label>Pitch</label>
+          <input id="pitch" type="range" min="0.8" max="1.6" step="0.05" value="1">
+        </div>
+      </section>
+      <section class="row">
+        <label><input id="easy" type="checkbox"> Easy Read</label>
+        <label><input id="dys" type="checkbox"> Dyslexia Font</label>
+        <label><input id="contrast" type="checkbox"> High Contrast</label>
+        <label><input id="focus" type="checkbox"> Focus Mode</label>
+        <label><input id="ruler" type="checkbox"> Reading Ruler</label>
+      </section>
+      <section class="row">
+        <label>Size</label>
+        <input id="size" type="range" min="0.8" max="1.8" step="0.05" value="1">
+      </section>
+    </main>
+    <footer class="ft">
+      <a href="options.html" target="_blank">Options</a>
+    </footer>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
