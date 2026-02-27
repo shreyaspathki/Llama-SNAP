@@ -1,0 +1,417 @@
+/*
+ * SNAP Accessibility Color Themes
+ * Similar to GitHub's color blindness theme system.
+ * Each mode defines CSS variables consumed by Tailwind utilities and components.
+ *
+ * Modes:
+ *   [default]       – Standard emerald/red/blue palette
+ *   [protanopia]    – Red-blind: reds → orange/amber, greens → blue-tinted
+ *   [deuteranopia]  – Green-blind: greens → gold/yellow, reds → orange
+ *   [tritanopia]    – Blue-yellow blind: blues → cyan/teal, yellows → pink/red
+ *   [high-contrast] – Maximum contrast: pure black/white + vivid accent
+ */
+
+/* ─── Default Theme ─────────────────────────────────────────────────── */
+:root,
+[data-a11y-theme="default"] {
+  /* Primary action / success */
+  --snap-primary: #10b981;          /* emerald-500 */
+  --snap-primary-hover: #059669;    /* emerald-600 */
+  --snap-primary-light: #ecfdf5;    /* emerald-50 */
+  --snap-primary-ring: rgba(16, 185, 129, 0.2);
+
+  /* Danger / error */
+  --snap-danger: #ef4444;           /* red-500 */
+  --snap-danger-light: #fef2f2;     /* red-50 */
+  --snap-danger-border: #fecaca;    /* red-200 */
+  --snap-danger-text: #dc2626;      /* red-600 */
+
+  /* Warning */
+  --snap-warning: #f59e0b;          /* amber-500 */
+  --snap-warning-light: #fffbeb;    /* amber-50 */
+
+  /* Info */
+  --snap-info: #3b82f6;            /* blue-500 */
+  --snap-info-light: #eff6ff;       /* blue-50 */
+
+  /* Surface & text */
+  --snap-bg: #fafafa;              /* zinc-50 */
+  --snap-surface: #ffffff;
+  --snap-surface-hover: #f4f4f5;   /* zinc-100 */
+  --snap-border: #e4e4e7;          /* zinc-200 */
+  --snap-border-light: #f4f4f5;    /* zinc-100 */
+  --snap-text: #18181b;            /* zinc-900 */
+  --snap-text-secondary: #71717a;  /* zinc-500 */
+  --snap-text-muted: #a1a1aa;      /* zinc-400 */
+
+  /* Status badges */
+  --snap-success-badge-bg: #dcfce7;    /* green-100 */
+  --snap-success-badge-text: #166534;  /* green-800 */
+  --snap-error-badge-bg: #fee2e2;      /* red-100 */
+  --snap-error-badge-text: #991b1b;    /* red-800 */
+  --snap-warning-badge-bg: #fef3c7;    /* amber-100 */
+  --snap-warning-badge-text: #92400e;  /* amber-800 */
+  --snap-info-badge-bg: #dbeafe;       /* blue-100 */
+  --snap-info-badge-text: #1e40af;     /* blue-800 */
+
+  /* Chat bubbles */
+  --snap-chat-user-bg: #10b981;
+  --snap-chat-user-text: #ffffff;
+  --snap-chat-bot-bg: #ffffff;
+  --snap-chat-bot-text: #3f3f46;
+  --snap-chat-bot-border: #f4f4f5;
+  --snap-chat-error-bg: #fef2f2;
+  --snap-chat-error-text: #dc2626;
+  --snap-chat-error-border: #fecaca;
+
+  /* Charts / data visualization */
+  --snap-chart-1: #10b981;  /* emerald */
+  --snap-chart-2: #3b82f6;  /* blue */
+  --snap-chart-3: #f59e0b;  /* amber */
+  --snap-chart-4: #ef4444;  /* red */
+  --snap-chart-5: #8b5cf6;  /* violet */
+
+  /* Icon accent for non-color cues */
+  --snap-icon-success: #10b981;
+  --snap-icon-error: #ef4444;
+  --snap-icon-warning: #f59e0b;
+  --snap-icon-info: #3b82f6;
+}
+
+/* ─── Protanopia (Red-blind) ─────────────────────────────────────── */
+[data-a11y-theme="protanopia"] {
+  --snap-primary: #2563eb;          /* blue-600 */
+  --snap-primary-hover: #1d4ed8;    /* blue-700 */
+  --snap-primary-light: #eff6ff;    /* blue-50 */
+  --snap-primary-ring: rgba(37, 99, 235, 0.2);
+
+  --snap-danger: #d97706;           /* amber-600 (replaces red) */
+  --snap-danger-light: #fffbeb;     /* amber-50 */
+  --snap-danger-border: #fde68a;    /* amber-200 */
+  --snap-danger-text: #b45309;      /* amber-700 */
+
+  --snap-warning: #ea580c;          /* orange-600 */
+  --snap-warning-light: #fff7ed;    /* orange-50 */
+
+  --snap-info: #0891b2;            /* cyan-600 */
+  --snap-info-light: #ecfeff;      /* cyan-50 */
+
+  --snap-bg: #fafafa;
+  --snap-surface: #ffffff;
+  --snap-surface-hover: #f4f4f5;
+  --snap-border: #e4e4e7;
+  --snap-border-light: #f4f4f5;
+  --snap-text: #18181b;
+  --snap-text-secondary: #71717a;
+  --snap-text-muted: #a1a1aa;
+
+  --snap-success-badge-bg: #dbeafe;
+  --snap-success-badge-text: #1e40af;
+  --snap-error-badge-bg: #fef3c7;
+  --snap-error-badge-text: #92400e;
+  --snap-warning-badge-bg: #ffedd5;
+  --snap-warning-badge-text: #9a3412;
+  --snap-info-badge-bg: #cffafe;
+  --snap-info-badge-text: #155e75;
+
+  --snap-chat-user-bg: #2563eb;
+  --snap-chat-user-text: #ffffff;
+  --snap-chat-bot-bg: #ffffff;
+  --snap-chat-bot-text: #3f3f46;
+  --snap-chat-bot-border: #f4f4f5;
+  --snap-chat-error-bg: #fffbeb;
+  --snap-chat-error-text: #b45309;
+  --snap-chat-error-border: #fde68a;
+
+  --snap-chart-1: #2563eb;
+  --snap-chart-2: #0891b2;
+  --snap-chart-3: #d97706;
+  --snap-chart-4: #ea580c;
+  --snap-chart-5: #7c3aed;
+
+  --snap-icon-success: #2563eb;
+  --snap-icon-error: #d97706;
+  --snap-icon-warning: #ea580c;
+  --snap-icon-info: #0891b2;
+}
+
+/* ─── Deuteranopia (Green-blind) ─────────────────────────────────── */
+[data-a11y-theme="deuteranopia"] {
+  --snap-primary: #ca8a04;          /* yellow-600 */
+  --snap-primary-hover: #a16207;    /* yellow-700 */
+  --snap-primary-light: #fefce8;    /* yellow-50 */
+  --snap-primary-ring: rgba(202, 138, 4, 0.2);
+
+  --snap-danger: #ea580c;           /* orange-600 (replaces red) */
+  --snap-danger-light: #fff7ed;     /* orange-50 */
+  --snap-danger-border: #fed7aa;    /* orange-200 */
+  --snap-danger-text: #c2410c;      /* orange-700 */
+
+  --snap-warning: #d97706;          /* amber-600 */
+  --snap-warning-light: #fffbeb;
+
+  --snap-info: #2563eb;            /* blue-600 */
+  --snap-info-light: #eff6ff;
+
+  --snap-bg: #fafafa;
+  --snap-surface: #ffffff;
+  --snap-surface-hover: #f4f4f5;
+  --snap-border: #e4e4e7;
+  --snap-border-light: #f4f4f5;
+  --snap-text: #18181b;
+  --snap-text-secondary: #71717a;
+  --snap-text-muted: #a1a1aa;
+
+  --snap-success-badge-bg: #fef9c3;
+  --snap-success-badge-text: #854d0e;
+  --snap-error-badge-bg: #ffedd5;
+  --snap-error-badge-text: #9a3412;
+  --snap-warning-badge-bg: #fef3c7;
+  --snap-warning-badge-text: #92400e;
+  --snap-info-badge-bg: #dbeafe;
+  --snap-info-badge-text: #1e40af;
+
+  --snap-chat-user-bg: #ca8a04;
+  --snap-chat-user-text: #ffffff;
+  --snap-chat-bot-bg: #ffffff;
+  --snap-chat-bot-text: #3f3f46;
+  --snap-chat-bot-border: #f4f4f5;
+  --snap-chat-error-bg: #fff7ed;
+  --snap-chat-error-text: #c2410c;
+  --snap-chat-error-border: #fed7aa;
+
+  --snap-chart-1: #ca8a04;
+  --snap-chart-2: #2563eb;
+  --snap-chart-3: #d97706;
+  --snap-chart-4: #ea580c;
+  --snap-chart-5: #7c3aed;
+
+  --snap-icon-success: #ca8a04;
+  --snap-icon-error: #ea580c;
+  --snap-icon-warning: #d97706;
+  --snap-icon-info: #2563eb;
+}
+
+/* ─── Tritanopia (Blue-yellow blind) ─────────────────────────────── */
+[data-a11y-theme="tritanopia"] {
+  --snap-primary: #0d9488;          /* teal-600 */
+  --snap-primary-hover: #0f766e;    /* teal-700 */
+  --snap-primary-light: #f0fdfa;    /* teal-50 */
+  --snap-primary-ring: rgba(13, 148, 136, 0.2);
+
+  --snap-danger: #e11d48;           /* rose-600 */
+  --snap-danger-light: #fff1f2;     /* rose-50 */
+  --snap-danger-border: #fecdd3;    /* rose-200 */
+  --snap-danger-text: #be123c;      /* rose-700 */
+
+  --snap-warning: #e11d48;          /* rose-600 (replaces yellow/amber) */
+  --snap-warning-light: #fff1f2;
+
+  --snap-info: #0d9488;            /* teal-600 */
+  --snap-info-light: #f0fdfa;
+
+  --snap-bg: #fafafa;
+  --snap-surface: #ffffff;
+  --snap-surface-hover: #f4f4f5;
+  --snap-border: #e4e4e7;
+  --snap-border-light: #f4f4f5;
+  --snap-text: #18181b;
+  --snap-text-secondary: #71717a;
+  --snap-text-muted: #a1a1aa;
+
+  --snap-success-badge-bg: #ccfbf1;
+  --snap-success-badge-text: #115e59;
+  --snap-error-badge-bg: #ffe4e6;
+  --snap-error-badge-text: #9f1239;
+  --snap-warning-badge-bg: #ffe4e6;
+  --snap-warning-badge-text: #9f1239;
+  --snap-info-badge-bg: #ccfbf1;
+  --snap-info-badge-text: #115e59;
+
+  --snap-chat-user-bg: #0d9488;
+  --snap-chat-user-text: #ffffff;
+  --snap-chat-bot-bg: #ffffff;
+  --snap-chat-bot-text: #3f3f46;
+  --snap-chat-bot-border: #f4f4f5;
+  --snap-chat-error-bg: #fff1f2;
+  --snap-chat-error-text: #be123c;
+  --snap-chat-error-border: #fecdd3;
+
+  --snap-chart-1: #0d9488;
+  --snap-chart-2: #e11d48;
+  --snap-chart-3: #0891b2;
+  --snap-chart-4: #be123c;
+  --snap-chart-5: #0e7490;
+
+  --snap-icon-success: #0d9488;
+  --snap-icon-error: #e11d48;
+  --snap-icon-warning: #e11d48;
+  --snap-icon-info: #0d9488;
+}
+
+/* ─── High Contrast ──────────────────────────────────────────────── */
+[data-a11y-theme="high-contrast"] {
+  --snap-primary: #000000;
+  --snap-primary-hover: #1a1a1a;
+  --snap-primary-light: #e5e5e5;
+  --snap-primary-ring: rgba(0, 0, 0, 0.3);
+
+  --snap-danger: #b91c1c;           /* red-700 — very saturated */
+  --snap-danger-light: #fee2e2;
+  --snap-danger-border: #b91c1c;
+  --snap-danger-text: #7f1d1d;      /* red-900 */
+
+  --snap-warning: #92400e;          /* amber-800 */
+  --snap-warning-light: #fef3c7;
+
+  --snap-info: #1e3a8a;            /* blue-900 */
+  --snap-info-light: #dbeafe;
+
+  --snap-bg: #ffffff;
+  --snap-surface: #ffffff;
+  --snap-surface-hover: #e5e5e5;
+  --snap-border: #000000;
+  --snap-border-light: #404040;
+  --snap-text: #000000;
+  --snap-text-secondary: #262626;
+  --snap-text-muted: #404040;
+
+  --snap-success-badge-bg: #d1fae5;
+  --snap-success-badge-text: #064e3b;
+  --snap-error-badge-bg: #fee2e2;
+  --snap-error-badge-text: #7f1d1d;
+  --snap-warning-badge-bg: #fef3c7;
+  --snap-warning-badge-text: #78350f;
+  --snap-info-badge-bg: #dbeafe;
+  --snap-info-badge-text: #1e3a8a;
+
+  --snap-chat-user-bg: #000000;
+  --snap-chat-user-text: #ffffff;
+  --snap-chat-bot-bg: #ffffff;
+  --snap-chat-bot-text: #000000;
+  --snap-chat-bot-border: #000000;
+  --snap-chat-error-bg: #fee2e2;
+  --snap-chat-error-text: #7f1d1d;
+  --snap-chat-error-border: #b91c1c;
+
+  --snap-chart-1: #000000;
+  --snap-chart-2: #b91c1c;
+  --snap-chart-3: #92400e;
+  --snap-chart-4: #1e3a8a;
+  --snap-chart-5: #581c87;
+
+  --snap-icon-success: #065f46;
+  --snap-icon-error: #b91c1c;
+  --snap-icon-warning: #92400e;
+  --snap-icon-info: #1e3a8a;
+}
+
+/* ─── Utility classes that consume CSS variables ────────────────── */
+
+/* Buttons */
+.snap-btn-primary {
+  background-color: var(--snap-primary);
+  color: white;
+}
+.snap-btn-primary:hover {
+  background-color: var(--snap-primary-hover);
+}
+
+/* Status badges (always include an icon + label, never color-only) */
+.snap-badge-success {
+  background-color: var(--snap-success-badge-bg);
+  color: var(--snap-success-badge-text);
+}
+.snap-badge-error {
+  background-color: var(--snap-error-badge-bg);
+  color: var(--snap-error-badge-text);
+}
+.snap-badge-warning {
+  background-color: var(--snap-warning-badge-bg);
+  color: var(--snap-warning-badge-text);
+}
+.snap-badge-info {
+  background-color: var(--snap-info-badge-bg);
+  color: var(--snap-info-badge-text);
+}
+
+/* Chat messages */
+.snap-chat-user {
+  background-color: var(--snap-chat-user-bg);
+  color: var(--snap-chat-user-text);
+}
+.snap-chat-bot {
+  background-color: var(--snap-chat-bot-bg);
+  color: var(--snap-chat-bot-text);
+  border-color: var(--snap-chat-bot-border);
+}
+.snap-chat-error {
+  background-color: var(--snap-chat-error-bg);
+  color: var(--snap-chat-error-text);
+  border-color: var(--snap-chat-error-border);
+}
+
+/* Surface / background */
+.snap-surface {
+  background-color: var(--snap-surface);
+  color: var(--snap-text);
+  border-color: var(--snap-border);
+}
+
+/* Focus ring */
+.snap-focus-ring:focus-visible {
+  outline: 2px solid var(--snap-primary);
+  outline-offset: 2px;
+}
+
+/* High-contrast specific overrides */
+[data-a11y-theme="high-contrast"] .snap-btn-primary {
+  border: 2px solid #000000;
+  font-weight: 800;
+}
+
+[data-a11y-theme="high-contrast"] * {
+  border-color: var(--snap-border) !important;
+}
+
+[data-a11y-theme="high-contrast"] button:focus-visible,
+[data-a11y-theme="high-contrast"] a:focus-visible,
+[data-a11y-theme="high-contrast"] input:focus-visible,
+[data-a11y-theme="high-contrast"] select:focus-visible {
+  outline: 3px solid #000000 !important;
+  outline-offset: 2px;
+}
+
+/* Switch toggle — follows primary theme color */
+.snap-switch[data-state="checked"] {
+  background-color: var(--snap-primary) !important;
+}
+
+/* Loading dots */
+.snap-loading-dot {
+  background-color: var(--snap-primary);
+}
+
+/* Accent-colored icon container */
+.snap-accent-icon {
+  background-color: var(--snap-primary-light);
+  color: var(--snap-primary);
+}
+
+.snap-accent-icon-info {
+  background-color: var(--snap-info-light);
+  color: var(--snap-info);
+}
+
+/* Active indicator dot (glowing) */
+.snap-active-dot {
+  background-color: var(--snap-primary);
+}
+.snap-active-dot-ping {
+  background-color: var(--snap-primary);
+}
+
+/* Info dot */
+.snap-info-dot {
+  background-color: var(--snap-info);
+}

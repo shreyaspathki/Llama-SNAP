@@ -223,6 +223,34 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           sendResponse({ ok: true, settings: s });
           break;
         }
+        case 'snapSetA11yTheme': {
+          // Persist the a11y theme to sync storage
+          const theme = msg.theme || 'default';
+          await new Promise(resolve => {
+            chrome.storage.sync.set({ snapA11yTheme: theme }, resolve);
+          });
+          // Broadcast to ALL tabs — inject content script first, then send message
+          try {
+            const tabs = await chrome.tabs.query({});
+            for (const tab of tabs) {
+              if (!tab.id || tab.url?.startsWith('chrome://') || tab.url?.startsWith('chrome-extension://')) continue;
+              try {
+                // Ensure content script is injected
+                await chrome.scripting.executeScript({
+                  target: { tabId: tab.id },
+                  files: ['content/content-script.js'],
+                });
+                // Now send the message
+                await chrome.tabs.sendMessage(tab.id, {
+                  type: 'snapA11yThemeChange',
+                  theme: theme,
+                }).catch(() => {});
+              } catch (_) { /* tab may not support scripting */ }
+            }
+          } catch (_) {}
+          sendResponse({ ok: true, theme });
+          break;
+        }
         case 'capturePage': {
           try {
             const windowId = sender?.tab?.windowId;
