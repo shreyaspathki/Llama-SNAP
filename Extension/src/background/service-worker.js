@@ -55,7 +55,7 @@ function createPrompt(type, text, lang) {
       return `Expand on this text with more details and context. Output ONLY the expanded text: "${text}"`;
     case 'translate':
       const target = (lang === 'hi') ? 'Hindi' : (lang === 'kn' ? 'Kannada' : 'English');
-      return `Translate the following to ${target}. Ensure every word is translated. Output ONLY the translation. Text: "${text}"`;
+      return `Translate the following to ${target}. CRITICAL: Translate EVERY word, including colors (e.g., 'orange' -> 'नारंगी'), proper nouns, and technical terms. Do not leave any English words. Output ONLY the translation. Text: "${text}"`;
     default:
       return `Task: ${type}. Text: "${text}"`;
   }

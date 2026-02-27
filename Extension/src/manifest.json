@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "SNAP - Smart Navigation and Accessibility Platform",
-  "description": "AI-powered web accessibility with popup and floating overlay toolbar. Minimal, futuristic, accessibility-first.",
+  "name": "Llama-SNAP - Simplify Narrate Adapt Personalise",
+  "description": "Llama 3.2 powered web accessibility with popup and floating overlay toolbar. Minimal, futuristic, accessibility-first.",
   "version": "1.0.0",
   "action": {
-    "default_title": "SNAP",
+    "default_title": "Llama-SNAP",
     "default_popup": "index.html"
   },
   "options_page": "options.html",
