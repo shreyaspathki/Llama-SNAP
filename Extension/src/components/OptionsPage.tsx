@@ -9,7 +9,9 @@ import {
   Server, 
   Save, 
   CheckCircle,
-  Database
+  Database,
+  Eye,
+  Check
 } from 'lucide-react';
 import {
   Select,
@@ -19,6 +21,7 @@ import {
   SelectValue,
 } from './ui/select';
 import { Switch } from './ui/switch';
+import { useAccessibilityTheme, THEME_OPTIONS, type A11yTheme } from '../context/AccessibilityThemeContext';
 
 const sendMessage = (msg: any): Promise<any> =>
   new Promise(r => {
@@ -28,6 +31,7 @@ const sendMessage = (msg: any): Promise<any> =>
   });
 
 export function OptionsPage() {
+  const { theme, setTheme } = useAccessibilityTheme();
   const [provider, setProvider] = useState('gateway');
   const [gatewayUrl, setGatewayUrl] = useState('http://localhost:8000/v1/generate');
   const [forceStrategy, setForceStrategy] = useState('local');
@@ -67,7 +71,7 @@ export function OptionsPage() {
         
         {/* Header */}
         <div className="bg-zinc-900 px-8 py-6 flex items-center gap-4 border-b border-zinc-800">
-          <div className="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center text-zinc-900 shadow-lg shadow-emerald-500/20">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center text-zinc-900 shadow-lg" style={{ backgroundColor: 'var(--snap-primary)', boxShadow: '0 10px 15px -3px var(--snap-primary-ring)' }}>
             <Settings className="w-7 h-7" strokeWidth={2.5} />
           </div>
           <div>
@@ -80,7 +84,7 @@ export function OptionsPage() {
           
           {/* AI Provider Section */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-emerald-600 font-bold text-xs uppercase tracking-wider">
+            <div className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider" style={{ color: 'var(--snap-primary)' }}>
               <Cpu className="w-4 h-4" />
               AI Configuration
             </div>
@@ -115,7 +119,7 @@ export function OptionsPage() {
                       type="text"
                       value={gatewayUrl}
                       onChange={e => setGatewayUrl(e.target.value)}
-                      className="w-full h-10 border border-zinc-200 rounded-lg px-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-mono text-zinc-600"
+                      className="w-full h-10 border border-zinc-200 rounded-lg px-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[var(--snap-primary-ring)] focus:border-[var(--snap-primary)] transition-all font-mono text-zinc-600"
                     />
                   </div>
                   <div className="space-y-2">
@@ -148,7 +152,7 @@ export function OptionsPage() {
                     value={ollamaModel}
                     onChange={e => setOllamaModel(e.target.value)}
                     placeholder="llama3.2:3b"
-                    className="w-full h-10 border border-zinc-200 rounded-lg px-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-mono"
+                    className="w-full h-10 border border-zinc-200 rounded-lg px-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[var(--snap-primary-ring)] focus:border-[var(--snap-primary)] transition-all font-mono"
                   />
                 </div>
               )}
@@ -157,10 +161,52 @@ export function OptionsPage() {
 
           <div className="w-full h-px bg-zinc-100" />
 
+          {/* Accessibility Theme Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider" style={{ color: 'var(--snap-primary)' }}>
+              <Eye className="w-4 h-4" />
+              Color Vision Accessibility
+            </div>
+            <p className="text-xs text-zinc-500">
+              Choose a color palette optimized for your vision. Similar to GitHub's accessibility themes.
+            </p>
+            <div className="grid gap-2">
+              {THEME_OPTIONS.map(opt => {
+                const isActive = theme === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    onClick={() => setTheme(opt.id as A11yTheme)}
+                    className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left ${
+                      isActive
+                        ? 'border-[var(--snap-primary)] bg-[var(--snap-primary-light)] shadow-sm'
+                        : 'border-zinc-100 bg-zinc-50 hover:border-zinc-200 hover:bg-white'
+                    }`}
+                  >
+                    <span className="text-xl select-none w-8 text-center" aria-hidden="true">{opt.icon}</span>
+                    <div className="flex-1">
+                      <span className={`block text-sm font-bold ${
+                        isActive ? 'text-zinc-900' : 'text-zinc-700'
+                      }`}>
+                        {opt.label}
+                      </span>
+                      <span className="block text-xs text-zinc-400 mt-0.5">{opt.description}</span>
+                    </div>
+                    {isActive && (
+                      <Check className="w-5 h-5 shrink-0" style={{ color: 'var(--snap-primary)' }} aria-label="Active" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="w-full h-px bg-zinc-100" />
+
           {/* Performance & Privacy */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-4">
-              <div className="flex items-center gap-2 text-emerald-600 font-bold text-xs uppercase tracking-wider">
+              <div className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider" style={{ color: 'var(--snap-primary)' }}>
                 <Server className="w-4 h-4" />
                 Performance
               </div>
@@ -176,14 +222,15 @@ export function OptionsPage() {
                   step={64}
                   value={maxTokens}
                   onChange={e => setMaxTokens(parseInt(e.target.value, 10))}
-                  className="w-full accent-emerald-500 h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer"
+                  className="w-full h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer"
+                  style={{ accentColor: 'var(--snap-primary)' }}
                 />
                 <p className="text-xs text-zinc-500">Maximum length of AI response.</p>
               </div>
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center gap-2 text-emerald-600 font-bold text-xs uppercase tracking-wider">
+              <div className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider" style={{ color: 'var(--snap-primary)' }}>
                 <Shield className="w-4 h-4" />
                 Privacy Control
               </div>
@@ -198,7 +245,7 @@ export function OptionsPage() {
                   <Switch 
                     checked={privacy} 
                     onCheckedChange={setPrivacy}
-                    className="data-[state=checked]:bg-emerald-500"
+                    className="snap-switch"
                   />
                 </div>
               </div>
@@ -215,7 +262,7 @@ export function OptionsPage() {
           
           <div className="flex items-center gap-4">
              {status && (
-              <div className="flex items-center gap-1.5 text-emerald-600 text-sm font-bold animate-pulse">
+              <div className="flex items-center gap-1.5 text-sm font-bold animate-pulse" style={{ color: 'var(--snap-primary)' }}>
                 <CheckCircle className="w-4 h-4" />
                 {status}
               </div>

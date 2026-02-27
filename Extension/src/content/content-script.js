@@ -40,328 +40,300 @@ if (!window.snapContentScriptInjected) {
     overlayRoot = host.attachShadow({ mode: 'open' });
     toolbarEl = document.createElement('div');
 
-    // Inject Styles & HTML - Zinc Theme
+    // Inject Styles & HTML — Canva-style icon-only toolbar
     toolbarEl.innerHTML = `
     <style>
       :host { all: initial; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
       * { box-sizing: border-box; }
-      
-      .wrapper {
-        width: 320px;
-        background: #FAFAFA; /* Zinc-50 */
-        border: 1px solid #E4E4E7; /* Zinc-200 */
-        border-radius: 16px;
-        box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.1), 0 4px 10px -3px rgba(0, 0, 0, 0.05);
+
+      .toolbar {
         display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        transition: height 0.3s cubic-bezier(0.16, 1, 0.3, 1), width 0.3s ease, opacity 0.2s;
-        animation: scaleIn 0.2s ease-out;
+        flex-direction: row;
+        align-items: center;
+        gap: 4px;
+        width: max-content;
+        background: #18181B;
+        border-radius: 16px;
+        padding: 6px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.25), 0 2px 8px rgba(0,0,0,0.15);
+        animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        user-select: none;
       }
 
-      @keyframes scaleIn {
-        from { transform: scale(0.95); opacity: 0; }
+      @keyframes popIn {
+        from { transform: scale(0.9); opacity: 0; }
         to { transform: scale(1); opacity: 1; }
       }
 
-      /* Header */
-      .header {
-        height: 44px;
-        padding: 0 16px;
-        background: #FFFFFF;
-        border-bottom: 1px solid #F4F4F5;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        cursor: grab;
-        user-select: none;
-      }
-      .header:active { cursor: grabbing; }
-
-      .brand {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-weight: 600;
-        font-size: 13px;
-        color: #18181B;
-      }
-      .logo-box {
-        width: 24px;
-        height: 24px;
-        background: #10B981;
-        border-radius: 6px;
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 800;
-        font-size: 14px;
-      }
-
-      .controls { display: flex; gap: 4px; }
-      /* Cards */
-      .card {
-        background: #FFFFFF;
-        border: 1px solid #E4E4E7;
+      /* Drag handle / logo */
+      .drag-handle {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #10B981, #0D9488);
         border-radius: 12px;
-        padding: 12px;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-      }
-
-      .card-header {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 4px;
-      }
-      .card-icon {
-        width: 24px;
-        height: 24px;
-        border-radius: 6px;
         display: flex;
         align-items: center;
         justify-content: center;
+        color: white;
+        font-weight: 800;
+        font-size: 18px;
+        cursor: grab;
+        flex-shrink: 0;
+        transition: transform 0.15s;
       }
-      .bg-emerald { background: #ECFDF5; color: #059669; }
-      .bg-blue { background: #EFF6FF; color: #2563EB; }
+      .drag-handle:active { cursor: grabbing; transform: scale(0.95); }
 
-      .card-title {
+      /* Divider */
+      .divider {
+        width: 1px;
+        height: 28px;
+        background: #3F3F46;
+        margin: 0 2px;
+        flex-shrink: 0;
+      }
+
+      /* Group toggle button (Smart Tools / Accessibility) */
+      .group-btn {
+        position: relative;
+        height: 40px;
+        border: none;
+        background: #27272A;
+        border-radius: 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 14px;
+        color: #A1A1AA;
         font-size: 12px;
-        font-weight: 700;
-        color: #18181B;
-        line-height: 1;
+        font-weight: 600;
+        font-family: inherit;
+        transition: all 0.15s;
+        flex-shrink: 0;
+        white-space: nowrap;
       }
-      .card-desc {
-         font-size: 9px;
-         font-weight: 500;
-         color: #A1A1AA;
-         margin-top: 2px;
+      .group-btn:hover { background: #3F3F46; color: #FFFFFF; }
+      .group-btn.expanded { background: #10B981; color: #FFFFFF; }
+      .group-btn .dot-indicator {
+        width: 6px; height: 6px; border-radius: 50%;
+        background: #10B981; display: none;
+        position: absolute; top: 6px; right: 6px;
+      }
+      .group-btn.has-active .dot-indicator { display: block; }
+      .group-btn.expanded .dot-indicator { background: white; }
+
+      /* Expandable panel (sub-buttons) */
+      .expand-panel {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 2px;
+        max-width: 0;
+        overflow: hidden;
+        opacity: 0;
+        transition: max-width 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease, padding 0.2s ease;
+        padding: 0;
+      }
+      .expand-panel.open {
+        max-width: 400px;
+        opacity: 1;
+        padding: 0 4px;
+        overflow: visible;
       }
 
-      /* Big Action Button */
-      .big-btn {
-        width: 100%;
+      /* Icon button */
+      .icon-btn {
+        position: relative;
+        width: 36px;
+        height: 36px;
+        border: none;
+        background: transparent;
+        border-radius: 10px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #A1A1AA;
+        transition: all 0.15s;
+        flex-shrink: 0;
+      }
+      .icon-btn:hover { background: #27272A; color: #FFFFFF; }
+      .icon-btn:active { transform: scale(0.92); }
+      .icon-btn.active { background: #10B981; color: #FFFFFF; }
+      .icon-btn.close-btn:hover { background: #7F1D1D; color: #FCA5A5; }
+
+      /* Tooltip */
+      .icon-btn::after, .group-btn::after {
+        content: attr(data-tip);
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%) scale(0.9);
+        background: #FAFAFA;
+        color: #18181B;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 8px;
+        white-space: nowrap;
+        pointer-events: none;
+        opacity: 0;
+        transition: all 0.15s;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border: 1px solid #E4E4E7;
+      }
+      .icon-btn:hover::after { opacity: 1; transform: translateX(-50%) scale(1); }
+      .group-btn:not(.expanded):hover::after { opacity: 1; transform: translateX(-50%) scale(1); }
+
+      /* Lang picker */
+      .lang-picker {
+        position: absolute;
+        bottom: calc(100% + 8px);
+        right: 0;
+        background: #FAFAFA;
+        border: 1px solid #E4E4E7;
+        border-radius: 10px;
+        padding: 6px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        display: none;
+        flex-direction: column;
+        gap: 2px;
+        z-index: 100;
+        animation: popIn 0.15s ease-out;
+      }
+      .lang-picker.open { display: flex; }
+      .lang-opt {
+        padding: 6px 12px;
+        border: none;
+        background: transparent;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        color: #3F3F46;
+        cursor: pointer;
+        text-align: left;
+        white-space: nowrap;
+        transition: background 0.1s;
+      }
+      .lang-opt:hover { background: #ECFDF5; color: #059669; }
+      .lang-opt.selected { background: #10B981; color: white; }
+
+      /* Toggle indicator dot */
+      .toggle-dot {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #10B981;
+        display: none;
+      }
+      .icon-btn.on .toggle-dot { display: block; }
+
+      /* Minimized bubble */
+      .minimized-btn {
+        display: none;
+        width: 48px;
         height: 48px;
         background: linear-gradient(135deg, #10B981, #0D9488);
-        border: none;
-        border-radius: 10px;
-        padding: 0 12px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        cursor: pointer;
-        position: relative;
-        overflow: hidden;
-        transition: transform 0.1s;
-      }
-      .big-btn:active { transform: scale(0.98); }
-      .big-btn-icon {
-        width: 28px;
-        height: 28px;
-        background: rgba(255,255,255,0.2);
-        border-radius: 6px;
-        display: flex;
+        border-radius: 50%;
+        color: white;
+        font-weight: 800;
+        font-size: 18px;
         align-items: center;
         justify-content: center;
-        color: white;
+        cursor: grab;
+        box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+        transition: transform 0.2s;
+        user-select: none;
       }
-      .big-btn-text {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        color: white;
-      }
-      .big-label { font-size: 12px; font-weight: 700; }
-      .big-sub { font-size: 9px; opacity: 0.9; }
+      .minimized-btn:hover { transform: scale(1.1); }
+      .minimized-btn:active { cursor: grabbing; }
 
-      /* Grid Buttons */
-      .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-      
-      .tool-btn {
-        background: #FAFAFA;
-        border: 1px solid #F4F4F5;
-        border-radius: 10px;
-        padding: 10px;
-        text-align: left;
-        cursor: pointer;
-        transition: all 0.2s;
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-      }
-      .tool-btn:hover { background: #FFFFFF; border-color: #A7F3D0; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.1); }
-      
-      .tool-icon {
-        width: 24px;
-        height: 24px;
-        background: #FFFFFF;
-        border: 1px solid #E4E4E7;
-        border-radius: 6px;
-        display: flex; 
-        align-items: center; 
-        justify-content: center;
-        color: #52525B;
-      }
-      .tool-btn:hover .tool-icon { color: #059669; border-color: #D1FAE5; }
-
-      .tool-label { font-size: 11px; font-weight: 700; color: #27272A; }
-      .tool-desc { font-size: 9px; color: #A1A1AA; }
-
-      /* Translation Row */
-      .trans-row { display: flex; gap: 6px; }
-      .select-wrap {
-        flex: 1;
-        position: relative;
-      }
-      .lang-select {
-        width: 100%;
-        height: 36px;
-        padding: 0 8px;
-        border: 1px solid #E4E4E7;
-        border-radius: 8px;
-        background: #FAFAFA;
-        font-size: 11px;
-        font-weight: 500;
-        color: #18181B;
-        appearance: none;
-        cursor: pointer;
-      }
-      .trans-btn {
-        padding: 0 12px;
-        height: 36px;
-        background: #18181B;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 11px;
-        font-weight: 700;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-      }
-      .trans-btn:hover { background: #27272A; }
-
-      .separator {
-        height: 1px;
-        background: #F4F4F5;
-        margin: 8px 0;
-      }
-
+      :host(.minimized) .toolbar { display: none; }
+      :host(.minimized) .minimized-btn { display: flex; }
     </style>
 
-    <div class="wrapper">
-      <div class="header" id="drag-handle">
-        <div class="brand">
-          <div class="logo-box">S</div>
-          <span class="title">SNAP Assistant</span>
-        </div>
-        <div class="controls">
-          <button class="icon-btn" id="btn-minimize" title="Minimize to Bubble">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+    <div class="toolbar">
+      <!-- Drag handle / Logo -->
+      <div class="drag-handle" id="drag-handle" title="Drag to move">S</div>
+
+      <div class="divider"></div>
+
+      <!-- Smart Tools group -->
+      <button class="group-btn" id="grp-smart" data-tip="Smart Tools">
+        <span>Smart Tools</span>
+        <span class="dot-indicator"></span>
+      </button>
+      <div class="expand-panel" id="panel-smart">
+        <button class="icon-btn" id="btn-simplify" data-tip="Simplify">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4V2"/><path d="M15 16v-2"/><path d="M8 9h2"/><path d="M20 9h2"/><path d="M17.8 11.8L19 13"/><path d="M15 9h.01"/><path d="M17.8 6.2L19 5"/><path d="M11 6.2L9.7 5"/><path d="M11 11.8L9.7 13"/><path d="M8 15h2c1.1 0 2 .9 2 2v2c0 1.1-.9 2-2 2H8c-1.1 0-2-.9-2-2v-2c0-1.1.9-2 2-2z"/></svg>
+        </button>
+        <button class="icon-btn" id="btn-explain" data-tip="Explain">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        </button>
+        <button class="icon-btn" id="btn-expand" data-tip="Expand">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>
+        </button>
+        <div class="divider"></div>
+        <div style="position:relative">
+          <button class="icon-btn" id="btn-translate" data-tip="Translate">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l6 6"/><path d="M4 14l6-8"/><path d="M2 5h12"/><path d="M7 2v3"/><path d="M22 22l-5-10-5 10"/><path d="M14 18h6"/></svg>
           </button>
-          <button class="icon-btn close" id="btn-close" title="Close Overlay">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-          </button>
+          <div class="lang-picker" id="lang-picker">
+            <button class="lang-opt selected" data-lang="hi">Hindi</button>
+            <button class="lang-opt" data-lang="kn">Kannada</button>
+            <button class="lang-opt" data-lang="es">Spanish</button>
+            <button class="lang-opt" data-lang="fr">French</button>
+          </div>
         </div>
+        <div class="divider"></div>
+        <button class="icon-btn" id="btn-read" data-tip="Read Aloud">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+        </button>
+        <button class="icon-btn" id="btn-stop" data-tip="Stop">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+        </button>
       </div>
 
-      <div class="content">
-        
-        <!-- Content Intelligence Card -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-icon bg-emerald">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"></path></svg>
-            </div>
-            <div>
-               <div class="card-title">Content Intelligence</div>
-               <div class="card-desc">Simplify & understand content</div>
-            </div>
-          </div>
-
-          <button class="big-btn" id="btn-simplify">
-             <div class="big-btn-icon">
-               <svg width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"></path></svg>
-             </div>
-             <div class="big-btn-text">
-               <span class="big-label">Simplify Selection</span>
-               <span class="big-sub">Rewrite complex text simply</span>
-             </div>
-          </button>
-
-          <div class="grid-2">
-            <button class="tool-btn" id="btn-explain">
-              <div class="tool-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></div>
-              <div>
-                <span class="tool-label">Explain</span>
-                <span class="tool-desc">Detailed analysis</span>
-              </div>
-            </button>
-            <button class="tool-btn" id="btn-expand">
-              <div class="tool-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg></div>
-              <div>
-                <span class="tool-label">Expand</span>
-                <span class="tool-desc">Add context</span>
-              </div>
-            </button>
-          </div>
-        </div>
-
-        <!-- Translation Card -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-icon bg-blue">
-               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l6 6"></path><path d="M4 14h16"></path><path d="M2 5h20"></path><path d="M22 22l-5-10-5 10"></path><path d="M14 18h6"></path></svg>
-            </div>
-            <div>
-               <div class="card-title">Rapid Translation</div>
-               <div class="card-desc">Instant text localization</div>
-            </div>
-          </div>
-          
-          <div class="trans-row">
-            <div class="select-wrap">
-              <select class="lang-select" id="lang-select">
-                <option value="hi">Hindi (हिंदी)</option>
-                <option value="kn">Kannada (ಕನ್ನಡ)</option>
-                <option value="es">Spanish</option>
-                <option value="fr">French</option>
-              </select>
-            </div>
-            <button class="trans-btn" id="btn-translate">
-              Translate
-            </button>
-          </div>
-        </div>
-
-        <div class="separator"></div>
-
-        <!-- Legacy Sections (Visuals/Annotate) kept as simple lists for now -->
-        <div>
-          <div class="section-label">Reading & Access</div>
-          <div class="grid-2">
-            <button class="action-btn" id="btn-read">Read Aloud</button>
-            <button class="action-btn" id="btn-stop">Stop</button>
-          </div>
-          <div class="toggle-row" style="margin-top: 8px;">
-            <label class="chip-toggle"><input type="checkbox" id="tog-easy">Easy Read</label>
-            <label class="chip-toggle"><input type="checkbox" id="tog-dys">Dyslexia</label>
-            <label class="chip-toggle"><input type="checkbox" id="tog-contrast">Contrast</label>
-            <label class="chip-toggle"><input type="checkbox" id="tog-focus">Focus</label>
-          </div>
-        </div>
+      <!-- Accessibility group -->
+      <button class="group-btn" id="grp-a11y" data-tip="Accessibility">
+        <span>Accessibility</span>
+        <span class="dot-indicator"></span>
+      </button>
+      <div class="expand-panel" id="panel-a11y">
+        <button class="icon-btn" id="tog-easy" data-tip="Easy Read">
+          <span class="toggle-dot"></span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        </button>
+        <button class="icon-btn" id="tog-dys" data-tip="Dyslexia Font">
+          <span class="toggle-dot"></span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+        </button>
+        <button class="icon-btn" id="tog-contrast" data-tip="High Contrast">
+          <span class="toggle-dot"></span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20z"/></svg>
+        </button>
+        <button class="icon-btn" id="tog-focus" data-tip="Focus Mode">
+          <span class="toggle-dot"></span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/></svg>
+        </button>
       </div>
+
+      <div class="divider"></div>
+
+      <!-- Minimize & Close -->
+      <button class="icon-btn" id="btn-minimize" data-tip="Minimize">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <button class="icon-btn close-btn" id="btn-close" data-tip="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
     </div>
 
-    <!-- Minimized Button (Docked State) -->
-    <div class="minimized-btn" id="minimized-handle" title="Expand SNAP">
-      S
-    </div>
+    <!-- Minimized bubble -->
+    <div class="minimized-btn" id="minimized-handle" title="Expand SNAP">S</div>
   `;
 
     overlayRoot.appendChild(toolbarEl);
@@ -405,8 +377,9 @@ if (!window.snapContentScriptInjected) {
 
   function clampToViewport(pos) {
     if (!overlayHostEl) return pos;
-    const w = overlayState.minimized ? 60 : 320;
-    const h = overlayState.minimized ? 60 : 600;
+    const toolbar = overlayRoot?.querySelector('.toolbar');
+    const w = overlayState.minimized ? 60 : (toolbar?.offsetWidth || 600);
+    const h = overlayState.minimized ? 60 : (toolbar?.offsetHeight || 48);
     const maxX = window.innerWidth - w;
     const maxY = window.innerHeight - h;
     return {
@@ -476,83 +449,169 @@ if (!window.snapContentScriptInjected) {
 
   function initEvents() {
     const q = (sel) => overlayRoot.querySelector(sel);
+    let selectedLang = 'hi';
 
-    // Action Buttons
-    ['simplify', 'explain', 'summarize', 'expand', 'translate'].forEach(action => {
-      // Find the button (handling potential nulls)
+    // --- Expandable group toggle logic ---
+    const grpSmart = q('#grp-smart');
+    const grpA11y = q('#grp-a11y');
+    const panelSmart = q('#panel-smart');
+    const panelA11y = q('#panel-a11y');
+
+    function togglePanel(grpBtn, panel, otherGrp, otherPanel) {
+      const isOpen = panel.classList.contains('open');
+      // Close the other panel first
+      otherPanel.classList.remove('open');
+      otherGrp.classList.remove('expanded');
+      // Toggle this panel
+      if (isOpen) {
+        panel.classList.remove('open');
+        grpBtn.classList.remove('expanded');
+      } else {
+        panel.classList.add('open');
+        grpBtn.classList.add('expanded');
+      }
+    }
+
+    grpSmart?.addEventListener('click', () => togglePanel(grpSmart, panelSmart, grpA11y, panelA11y));
+    grpA11y?.addEventListener('click', () => togglePanel(grpA11y, panelA11y, grpSmart, panelSmart));
+
+    // AI Action Buttons
+    ['simplify', 'explain', 'expand'].forEach(action => {
       const btn = q('#btn-' + action);
       if (!btn) return;
 
       btn.addEventListener('click', async () => {
         let text = window.getSelection().toString().trim();
-        const lang = q('#lang-select')?.value || 'hi';
 
-        // Fallback to full page text if no selection
         if (!text) {
-           if (confirm("No text selected. Do you want to process the entire page?")) {
+           if (confirm('No text selected. Process the entire page?')) {
                text = document.body.innerText.trim();
-               if (text.length > 15000) {
-                  // Truncate to avoid context limit issues
-                  text = text.substring(0, 15000) + "... [Truncated]";
-               }
-           } else {
-               return; // User cancelled
-           }
+               if (text.length > 15000) text = text.substring(0, 15000) + '... [Truncated]';
+           } else return;
         }
-
         if (!text) { alert('Page is empty.'); return; }
 
-        // Visual Feedback
-        const btn = q('#btn-' + action);
-        btn.style.opacity = '0.5';
-        btn.style.cursor = 'wait';
-
+        btn.classList.add('active');
         try {
-          const res = await sendMessage({
-            type: 'aiRequest',
-            actionType: action,
-            payload: { text, lang }
-          });
-
-          if (res.ok) {
-            showResultWindow(res.output, action);
-          } else {
-            alert('Error: ' + (res.error || 'Unknown error'));
-          }
+          const res = await sendMessage({ type: 'aiRequest', actionType: action, payload: { text, lang: selectedLang } });
+          if (res.ok) showResultWindow(res.output, action);
+          else alert('Error: ' + (res.error || 'Unknown error'));
         } catch (e) {
           alert('Failed: ' + e.message);
         } finally {
-          btn.style.opacity = '';
-          btn.style.cursor = '';
+          btn.classList.remove('active');
         }
       });
     });
 
-    // Toggles
+    // Translate button — right-click opens lang picker, left click translates
+    const translateBtn = q('#btn-translate');
+    const langPicker = q('#lang-picker');
+    if (translateBtn && langPicker) {
+      translateBtn.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        langPicker.classList.toggle('open');
+      });
+      translateBtn.addEventListener('click', async () => {
+        langPicker.classList.remove('open');
+        let text = window.getSelection().toString().trim();
+        if (!text) {
+          if (confirm('No text selected. Process the entire page?')) {
+            text = document.body.innerText.trim();
+            if (text.length > 15000) text = text.substring(0, 15000) + '... [Truncated]';
+          } else return;
+        }
+        if (!text) { alert('Page is empty.'); return; }
+        translateBtn.classList.add('active');
+        try {
+          const res = await sendMessage({ type: 'aiRequest', actionType: 'translate', payload: { text, lang: selectedLang } });
+          if (res.ok) showResultWindow(res.output, 'translate');
+          else alert('Error: ' + (res.error || 'Unknown error'));
+        } catch (e) {
+          alert('Failed: ' + e.message);
+        } finally {
+          translateBtn.classList.remove('active');
+        }
+      });
+
+      // Lang options
+      langPicker.querySelectorAll('.lang-opt').forEach(opt => {
+        opt.addEventListener('click', () => {
+          langPicker.querySelectorAll('.lang-opt').forEach(o => o.classList.remove('selected'));
+          opt.classList.add('selected');
+          selectedLang = opt.dataset.lang;
+          langPicker.classList.remove('open');
+        });
+      });
+
+      // Close lang picker on outside click
+      document.addEventListener('mousedown', (e) => {
+        if (!langPicker.contains(e.target) && e.target !== translateBtn) {
+          langPicker.classList.remove('open');
+        }
+      });
+    }
+
+    // Read Aloud / Stop
+    q('#btn-read')?.addEventListener('click', () => {
+      const text = window.getSelection().toString().trim() || document.body.innerText.substring(0, 5000);
+      if (!text) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      window.speechSynthesis.speak(u);
+      q('#btn-read')?.classList.add('active');
+      u.onend = () => q('#btn-read')?.classList.remove('active');
+    });
+    q('#btn-stop')?.addEventListener('click', () => {
+      window.speechSynthesis.cancel();
+      q('#btn-read')?.classList.remove('active');
+    });
+
+    // Accessibility toggle buttons (no checkboxes — click to toggle)
     const toggles = [
       { id: 'tog-easy', key: 'easyRead' },
       { id: 'tog-dys', key: 'dyslexiaFont' },
       { id: 'tog-contrast', key: 'highContrast' },
       { id: 'tog-focus', key: 'focusMode' },
-      { id: 'tog-ruler', key: 'readingRuler' },
     ];
 
+    const toggleState = {};
     toggles.forEach(t => {
-      q('#' + t.id)?.addEventListener('change', (e) => {
-        const val = e.target.checked;
-        sendMessage({ type: 'setSettings', patch: { [t.key]: val } });
-        applyAccessibility({ [t.key]: val });
+      toggleState[t.key] = false;
+      const btn = q('#' + t.id);
+      if (!btn) return;
+      btn.addEventListener('click', () => {
+        toggleState[t.key] = !toggleState[t.key];
+        btn.classList.toggle('on', toggleState[t.key]);
+        sendMessage({ type: 'setSettings', patch: { [t.key]: toggleState[t.key] } });
+        applyAccessibility({ [t.key]: toggleState[t.key] });
+        // Update dot indicator on accessibility group button
+        updateA11yDot();
       });
     });
+
+    function updateA11yDot() {
+      const anyOn = Object.values(toggleState).some(v => v);
+      grpA11y?.classList.toggle('has-active', anyOn);
+    }
   }
 
   function syncOverlayControls(settings) {
     const q = (sel) => overlayRoot.querySelector(sel);
-    if (q('#tog-easy')) q('#tog-easy').checked = !!settings.easyRead;
-    if (q('#tog-dys')) q('#tog-dys').checked = !!settings.dyslexiaFont;
-    if (q('#tog-contrast')) q('#tog-contrast').checked = !!settings.highContrast;
-    if (q('#tog-focus')) q('#tog-focus').checked = !!settings.focusMode;
-    if (q('#tog-ruler')) q('#tog-ruler').checked = !!settings.readingRuler;
+    const map = [
+      { id: 'tog-easy', key: 'easyRead' },
+      { id: 'tog-dys', key: 'dyslexiaFont' },
+      { id: 'tog-contrast', key: 'highContrast' },
+      { id: 'tog-focus', key: 'focusMode' },
+    ];
+    map.forEach(t => {
+      const btn = q('#' + t.id);
+      if (btn) btn.classList.toggle('on', !!settings[t.key]);
+    });
+    // Update dot indicator on accessibility group button
+    const anyOn = map.some(t => !!settings[t.key]);
+    const grpA11y = q('#grp-a11y');
+    grpA11y?.classList.toggle('has-active', anyOn);
   }
 
   function applyAccessibility(settings) {
@@ -569,10 +628,18 @@ if (!window.snapContentScriptInjected) {
     if (msg.type === 'toggleOverlay') {
       toggleOverlay();
     }
+    if (msg.type === 'closeOverlay') {
+      if (overlayHostEl) destroyOverlay();
+    }
     if (msg.type === 'aiProxy') {
        // From Popup -> trigger action in content script context
        const { actionType, payload } = msg;
        handleContentAction(actionType, payload);
+    }
+    if (msg.type === 'snapA11yThemeChange') {
+      applyWebpageA11yTheme(msg.theme);
+      sendResponse({ ok: true });
+      return true;
     }
     if (msg.type === 'ping') sendResponse('pong');
   });
@@ -818,6 +885,179 @@ if (!window.snapContentScriptInjected) {
   }
 
   console.log('[SNAP] Content script loaded');
+
+  // ═══════════════════════════════════════════════════════════════════
+  // COLOR BLINDNESS FILTERS — applied to the entire webpage
+  // Uses SVG <feColorMatrix> for scientifically-accurate color
+  // correction similar to GitHub's accessibility theme system.
+  // ═══════════════════════════════════════════════════════════════════
+
+  const SNAP_FILTER_ID = 'snap-a11y-filter';
+  const SNAP_FILTER_STYLE_ID = 'snap-a11y-filter-style';
+  const SNAP_HC_STYLE_ID = 'snap-a11y-hc-style';
+
+  /**
+   * SVG color matrices for each color-vision deficiency correction.
+   * These shift the color channels to bring problem colors into
+   * distinguishable ranges for each deficiency type.
+   *
+   * Protanopia  – Red-blind: shift reds toward blue/orange
+   * Deuteranopia – Green-blind: shift greens toward yellow/amber
+   * Tritanopia  – Blue-yellow blind: shift blues toward teal/cyan
+   */
+  const COLOR_MATRICES = {
+    protanopia: [
+      0.567, 0.433, 0.000, 0, 0,
+      0.558, 0.442, 0.000, 0, 0,
+      0.000, 0.242, 0.758, 0, 0,
+      0,     0,     0,     1, 0
+    ].join(' '),
+    deuteranopia: [
+      0.625, 0.375, 0.000, 0, 0,
+      0.700, 0.300, 0.000, 0, 0,
+      0.000, 0.300, 0.700, 0, 0,
+      0,     0,     0,     1, 0
+    ].join(' '),
+    tritanopia: [
+      0.950, 0.050, 0.000, 0, 0,
+      0.000, 0.433, 0.567, 0, 0,
+      0.000, 0.475, 0.525, 0, 0,
+      0,     0,     0,     1, 0
+    ].join(' '),
+  };
+
+  /**
+   * High-contrast mode CSS applied directly to the page
+   * (no SVG filter needed — it's a CSS-based approach).
+   */
+  const HIGH_CONTRAST_CSS = `
+    html[data-snap-a11y="high-contrast"] {
+      filter: contrast(1.4) !important;
+    }
+    html[data-snap-a11y="high-contrast"] img,
+    html[data-snap-a11y="high-contrast"] video,
+    html[data-snap-a11y="high-contrast"] canvas,
+    html[data-snap-a11y="high-contrast"] svg:not(#${SNAP_FILTER_ID}-svg) {
+      filter: contrast(0.85) brightness(1.1) !important;
+    }
+    html[data-snap-a11y="high-contrast"] a {
+      text-decoration: underline !important;
+      text-underline-offset: 3px !important;
+    }
+    html[data-snap-a11y="high-contrast"] button,
+    html[data-snap-a11y="high-contrast"] [role="button"],
+    html[data-snap-a11y="high-contrast"] input,
+    html[data-snap-a11y="high-contrast"] select,
+    html[data-snap-a11y="high-contrast"] textarea {
+      outline: 2px solid currentColor !important;
+      outline-offset: 1px !important;
+    }
+  `;
+
+  function injectSVGFilter(matrixValues) {
+    removeSVGFilter(); // clean previous
+
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('id', SNAP_FILTER_ID + '-svg');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;pointer-events:none;';
+
+    const defs = document.createElementNS(svgNS, 'defs');
+    const filter = document.createElementNS(svgNS, 'filter');
+    filter.setAttribute('id', SNAP_FILTER_ID);
+    filter.setAttribute('color-interpolation-filters', 'linearRGB');
+
+    const matrix = document.createElementNS(svgNS, 'feColorMatrix');
+    matrix.setAttribute('type', 'matrix');
+    matrix.setAttribute('values', matrixValues);
+
+    filter.appendChild(matrix);
+    defs.appendChild(filter);
+    svg.appendChild(defs);
+    document.body.appendChild(svg);
+
+    // Add CSS that references the SVG filter
+    const style = document.createElement('style');
+    style.id = SNAP_FILTER_STYLE_ID;
+    style.textContent = `
+      html[data-snap-a11y] {
+        filter: url(#${SNAP_FILTER_ID}) !important;
+      }
+      /* Don't double-filter the extension overlay */
+      #snap-overlay-host {
+        filter: none !important;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function injectHighContrast() {
+    removeHighContrast();
+    const style = document.createElement('style');
+    style.id = SNAP_HC_STYLE_ID;
+    style.textContent = HIGH_CONTRAST_CSS;
+    document.head.appendChild(style);
+  }
+
+  function removeSVGFilter() {
+    const svg = document.getElementById(SNAP_FILTER_ID + '-svg');
+    if (svg) svg.remove();
+    const style = document.getElementById(SNAP_FILTER_STYLE_ID);
+    if (style) style.remove();
+  }
+
+  function removeHighContrast() {
+    const style = document.getElementById(SNAP_HC_STYLE_ID);
+    if (style) style.remove();
+  }
+
+  function removeAllFilters() {
+    removeSVGFilter();
+    removeHighContrast();
+    document.documentElement.removeAttribute('data-snap-a11y');
+  }
+
+  /**
+   * Apply a color blindness mode to the current webpage.
+   * @param {'default'|'protanopia'|'deuteranopia'|'tritanopia'|'high-contrast'} mode
+   */
+  function applyWebpageA11yTheme(mode) {
+    removeAllFilters();
+
+    if (!mode || mode === 'default') {
+      console.log('[SNAP] Color filter removed (default mode)');
+      return;
+    }
+
+    document.documentElement.setAttribute('data-snap-a11y', mode);
+
+    if (mode === 'high-contrast') {
+      injectHighContrast();
+      console.log('[SNAP] High contrast mode applied to webpage');
+      return;
+    }
+
+    const matrix = COLOR_MATRICES[mode];
+    if (matrix) {
+      injectSVGFilter(matrix);
+      console.log(`[SNAP] ${mode} color filter applied to webpage`);
+    }
+  }
+
+  // Listen for theme change messages from the extension
+  // (Handled in the main onMessage listener above)
+
+  // On load: check storage for persisted theme and apply immediately
+  try {
+    chrome.storage.sync.get({ snapA11yTheme: 'default' }, (result) => {
+      if (result.snapA11yTheme && result.snapA11yTheme !== 'default') {
+        applyWebpageA11yTheme(result.snapA11yTheme);
+      }
+    });
+  } catch (e) {
+    console.log('[SNAP] Could not read a11y theme from storage:', e);
+  }
 
 })();
 } 
