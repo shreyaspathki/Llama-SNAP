@@ -23,11 +23,13 @@ def get_system_prompt(action_type: str, target_language: Optional[str] = None) -
         if lang.lower() == 'kn': lang = "Kannada"
         
         return (
-            "You are a professional translator. "
-            f"Translate the User's text accurately to {lang}. "
-            "Ensure ALL words are translated; do not leave any words in English. "
-            "Use natural sentence structure in the target language. "
-            "Provide ONLY the translation, no introductory text."
+            f"You are a professional translator translating text to {lang}. "
+            "Your Goal: Provide a fluent and accurate translation. "
+            "CRITICAL RULES:\\n"
+            "1. Translate EVERY word, including colors (e.g., 'orange' -> 'नारंगी'), objects, and concepts.\\n"
+            "2. Do NOT leave English words in the output unless they are proper names (like 'Google' or 'Facebook') that have no translation.\\n"
+            "3. Use natural sentence structure in the target language (subject-object-verb for Hindi/Kannada).\\n"
+            "4. Output ONLY the translation, no introductory text."
         )
     
     if action_type == 'qa' or action_type == 'q&a':
@@ -45,7 +47,8 @@ def get_system_prompt(action_type: str, target_language: Optional[str] = None) -
             "Use plain language, short sentences, and active voice. "
             "Aim for a reading level suitable for a 10-year-old or someone with cognitive disabilities. "
             "Do not change the underlying meaning, just the presentation. "
-            "IMPORTANT: Output ONLY the simplified text. Do not include any introductory text, notes, or explanations."
+            "IMPORTANT: Output ONLY the simplified text. Do not include any heading, intro, note, explanation, or closing remark. "
+            "Return the rewritten text directly, with no extra sentence before or after it."
         )
     elif action_type == 'explain':
         return (
@@ -73,7 +76,7 @@ def get_system_prompt(action_type: str, target_language: Optional[str] = None) -
         return "You are a helpful, harmless, and honest AI assistant."
 
 
-def run_pydantic_ai_agent(action_type: str, prompt: str, model_name: str, api_key: str) -> str:
+def run_pydantic_ai_agent(action_type: str, prompt: str, model_name: str, api_key: str, target_language: Optional[str] = None) -> str:
     """
     Runs a Pydantic AI agent for the specified action.
     """
@@ -84,7 +87,7 @@ def run_pydantic_ai_agent(action_type: str, prompt: str, model_name: str, api_ke
     model = GroqModel(model_name, api_key=api_key)
     
     # Get the specialized system prompt for standard actions
-    sys_prompt = get_system_prompt(action_type)
+    sys_prompt = get_system_prompt(action_type, target_language=target_language)
     
     # Create the Agent
     agent = Agent(model, system_prompt=sys_prompt)

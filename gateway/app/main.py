@@ -69,6 +69,60 @@ def _get_groq_client() -> Optional[GroqClient]:
     return GroqClient(keys, model=model)
 
 
+def _sanitize_output(action_type: str, text: str) -> str:
+    if not text:
+        return text
+
+    if action_type.lower() != "simplify":
+        return text.strip()
+
+    lines = []
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+
+        lower = line.lower()
+        if lower.startswith("here is the rewritten text"):
+            continue
+        if lower.startswith("here is the simplified text"):
+            continue
+        if lower.startswith("note:"):
+            continue
+        if lower.startswith("note -"):
+            continue
+        if lower.startswith("i've kept"):
+            continue
+        if lower.startswith("i have kept"):
+            continue
+        if lower.startswith("this was"):
+            continue
+
+        lines.append(line)
+
+    return "\n".join(lines).strip() or text.strip()
+
+
+def _generate_local_response(req: GenerateRequest, prompt: str) -> GenerateResponse:
+    sys_prompt = get_system_prompt(req.actionType, target_language=req.targetLanguage)
+    final_prompt = prompt
+    if sys_prompt:
+        final_prompt = f"{sys_prompt}\n{prompt}"
+
+    is_qa = req.actionType.lower() == "qa"
+    use_adapter = not is_qa
+    temperature = 0.3 if is_qa else 0.7
+
+    print(f"DEBUG: use_adapter={use_adapter}, temp={temperature} for action={req.actionType}")
+
+    try:
+        text = LocalLlamaModel.generate(final_prompt, use_adapter=use_adapter, temperature=temperature)
+        text = _sanitize_output(req.actionType, text)
+        return GenerateResponse(ok=True, output=text, provider="local-llama", model="llama3.2-3b-ft")
+    except Exception as e:
+        return GenerateResponse(ok=False, error=f"Local model failed: {e}")
+
+
 @app.get("/health")
 def health():
     return {
@@ -103,7 +157,7 @@ def _generate_impl(req: GenerateRequest, request: Request):
         print(f"DEBUG: FORCING GROQ with model={groq_model}")
 
         try:
-            text = run_pydantic_ai_agent(req.actionType, prompt, model=groq_model, api_key=keys[0])
+            text = run_pydantic_ai_agent(req.actionType, prompt, model=groq_model, api_key=keys[0], target_language=req.targetLanguage)
             if text:
                 return GenerateResponse(ok=True, output=text, provider="groq+pydantic_ai", model=groq_model)
         except Exception as e:
@@ -121,30 +175,18 @@ def _generate_impl(req: GenerateRequest, request: Request):
 
     if req.forceProvider == 'local':
         print(f"DEBUG: FORCING LOCAL MODEL")
-        
-        # Inject System Prompt to guide the model (matches training format: sys + input)
-        sys_prompt = get_system_prompt(req.actionType, target_language=req.targetLanguage)
-        final_prompt = prompt
-        if sys_prompt:
-             final_prompt = f"{sys_prompt}\n{prompt}"
-        
-        # Strategy: Use Fine-Tuned Adapter for specific tasks (simplify, etc)
-        # But use Base Model (disable adapter) for General QA to avoid overfitted/narrow responses
-        is_qa = (req.actionType.lower() == 'qa')
-        use_adapter = not is_qa
-        
-        # Lower temperature for QA to reduce verbosity/hallucination
-        temperature = 0.3 if is_qa else 0.7
-        
-        print(f"DEBUG: use_adapter={use_adapter}, temp={temperature} for action={req.actionType}")
+        return _generate_local_response(req, prompt)
 
-        try:
-            text = LocalLlamaModel.generate(final_prompt, use_adapter=use_adapter, temperature=temperature)
-            return GenerateResponse(ok=True, output=text, provider="local-llama", model="llama3.2-3b-ft")
-        except Exception as e:
-            return GenerateResponse(ok=False, error=f"Local model failed: {e}")
+    # DEFAULT (no force): PRIORITY 1 - Try Local First (Privacy-First Design)
+    print("DEBUG: Attempting local inference first...")
+    local_response = _generate_local_response(req, prompt)
+    if local_response.ok:
+        print("DEBUG: Success via Local Model")
+        return local_response
 
-    # PRIORITY: Try Groq first (if api keys configured)
+    print(f"DEBUG: {local_response.error}, falling back to Groq...")
+    
+    # PRIORITY 2: Try Groq (if api keys configured)
     keys = _get_groq_keys()
     if keys:
         groq_model = req.modelOverride or os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
@@ -152,8 +194,9 @@ def _generate_impl(req: GenerateRequest, request: Request):
         
         # A) Try Pydantic AI Agent first
         try:
-            text = run_pydantic_ai_agent(req.actionType, prompt, model=groq_model, api_key=keys[0])
+            text = run_pydantic_ai_agent(req.actionType, prompt, model=groq_model, api_key=keys[0], target_language=req.targetLanguage)
             if text:
+                text = _sanitize_output(req.actionType, text)
                 print("DEBUG: Success via Pydantic AI")
                 return GenerateResponse(ok=True, output=text, provider="groq+pydantic_ai", model=groq_model)
         except Exception as e:
@@ -164,13 +207,13 @@ def _generate_impl(req: GenerateRequest, request: Request):
         if groq:
             try:
                 text, used_model = groq.chat_completion(prompt=prompt)
+                text = _sanitize_output(req.actionType, text)
                 print("DEBUG: Success via Raw Groq")
                 return GenerateResponse(ok=True, output=text, provider="groq", model=used_model)
             except Exception as e_groq:
-                print(f"DEBUG: Groq failed: {e_groq}")
-                # Fall through to Ollama...
+                print(f"DEBUG: Groq failed: {e_groq}, falling back to Ollama...")
     
-    # 2) Fallback to Local Ollama
+    # PRIORITY 3: Fallback to Ollama
     print("DEBUG: Falling back to Ollama...")
     ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434/api/generate")
     ollama_model = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
@@ -185,6 +228,7 @@ def _generate_impl(req: GenerateRequest, request: Request):
             timeout_s=ollama_timeout_s,
             connect_timeout_s=ollama_connect_timeout_s,
         )
+        out = _sanitize_output(req.actionType, out)
         return GenerateResponse(ok=True, output=out, provider="ollama", model=ollama_model)
     except Exception as e_ollama:
         return GenerateResponse(ok=False, error=f"All providers failed. Ollama: {e_ollama}")

@@ -230,9 +230,7 @@ export function SnapPopup() {
       <div className="bg-white border-b border-zinc-100 px-5 py-4 shrink-0 relative z-20">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-black text-lg shadow-lg select-none" style={{ backgroundColor: 'var(--snap-primary)', boxShadow: '0 10px 15px -3px var(--snap-primary-ring)' }}>
-              L
-            </div>
+            <img src={chrome.runtime.getURL('assets/logosnap.png')} alt="SNAP Logo" className="w-9 h-9 rounded-xl shadow-lg select-none" style={{ objectFit: 'contain' }} />
             <div>
               <h1 className="text-lg font-bold text-zinc-900 tracking-tight leading-none">Llama-SNAP</h1>
             </div>
