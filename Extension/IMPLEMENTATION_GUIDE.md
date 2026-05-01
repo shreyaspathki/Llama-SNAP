@@ -1,7 +1,9 @@
-# 4-Button Text Processing Implementation - COMPLETE
+# 4-Button Text Processing Implementation - LEGACY NOTES
+
+> Current extension builds use the React/Vite popup, background service worker, and FastAPI gateway path. This document is kept as historical context for an older direct Ollama-oriented implementation.
 
 ## Overview
-Successfully implemented FOUR BUTTON ACTIONS that operate on selected text using the existing Ollama integration.
+Successfully implemented FOUR BUTTON ACTIONS that operate on selected text using the existing text-processing pipeline.
 
 ## Button Actions Implemented
 

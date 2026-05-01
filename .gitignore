@@ -23,3 +23,4 @@ __pycache__/
 
 # ignore figma files for UI 
 Accessibility\ Chrome\ Extension\ UI\ 1/
+Extension/src/ui/ui/

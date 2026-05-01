@@ -1,9 +1,9 @@
-# Local AI Gateway (Ollama-first, Groq fallback)
+# Local AI Gateway (local-first, provider-aware)
 
 Purpose:
 - Provide a single localhost HTTP API for the Chrome extension.
-- Try local Ollama first (your fine-tuned model).
-- If Ollama fails/unavailable, fall back to Groq (server-side keys).
+- Prefer the local fine-tuned Llama 3.2 3B Instruct model when requested.
+- Fall back to Groq or Ollama only when configured or explicitly selected.
 
 ## Install
 
@@ -16,6 +16,8 @@ pip install -r requirements.txt
 
 Set env vars (recommended via a `.env` file in this folder):
 
+- `LOCAL_MODEL_PATH=/path/to/llama3.2-3b-instruct`
+- `LOCAL_ADAPTER_PATH=/path/to/model_artifacts/llama-lora-v2`
 - `OLLAMA_URL=http://localhost:11434/api/generate`
 - `OLLAMA_MODEL=my-llama:latest` (or `llama3.2:3b`)
 - `GROQ_API_KEY=...` (single key) **or** `GROQ_API_KEYS=key1,key2,key3,key4` (comma-separated)
@@ -24,8 +26,8 @@ Set env vars (recommended via a `.env` file in this folder):
 ## Run
 
 ```bash
-cd /d/FYP/smart-accessibility/gateway
-python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+cd /d/FYP/smart-accessibility
+python -m uvicorn gateway.app.main:app --host 127.0.0.1 --port 8000
 ```
 
 Health check:

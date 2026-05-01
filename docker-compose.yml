@@ -46,5 +46,5 @@ services:
     ports:
       - "8080:80"
     volumes:
-      - ./EXT/dist:/usr/share/nginx/html
+      - ./Extension/dist:/usr/share/nginx/html
     restart: unless-stopped

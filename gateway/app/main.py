@@ -103,7 +103,7 @@ def _generate_impl(req: GenerateRequest, request: Request):
         print(f"DEBUG: FORCING GROQ with model={groq_model}")
 
         try:
-            text = run_pydantic_ai_agent(req.actionType, prompt, model=groq_model, api_key=keys[0])
+            text = run_pydantic_ai_agent(req.actionType, prompt, model=groq_model, api_key=keys[0], target_language=req.targetLanguage)
             if text:
                 return GenerateResponse(ok=True, output=text, provider="groq+pydantic_ai", model=groq_model)
         except Exception as e:
@@ -144,7 +144,33 @@ def _generate_impl(req: GenerateRequest, request: Request):
         except Exception as e:
             return GenerateResponse(ok=False, error=f"Local model failed: {e}")
 
-    # PRIORITY: Try Groq first (if api keys configured)
+    # DEFAULT (no force): PRIORITY 1 - Try Local First (Privacy-First Design)
+    print("DEBUG: Attempting local inference first...")
+    
+    # Inject System Prompt to guide the model (matches training format: sys + input)
+    sys_prompt = get_system_prompt(req.actionType, target_language=req.targetLanguage)
+    final_prompt = prompt
+    if sys_prompt:
+         final_prompt = f"{sys_prompt}\n{prompt}"
+    
+    # Strategy: Use Fine-Tuned Adapter for specific tasks (simplify, etc)
+    # But use Base Model (disable adapter) for General QA to avoid overfitted/narrow responses
+    is_qa = (req.actionType.lower() == 'qa')
+    use_adapter = not is_qa
+    
+    # Lower temperature for QA to reduce verbosity/hallucination
+    temperature = 0.3 if is_qa else 0.7
+    
+    print(f"DEBUG: use_adapter={use_adapter}, temp={temperature} for action={req.actionType}")
+
+    try:
+        text = LocalLlamaModel.generate(final_prompt, use_adapter=use_adapter, temperature=temperature)
+        print("DEBUG: Success via Local Model")
+        return GenerateResponse(ok=True, output=text, provider="local-llama", model="llama3.2-3b-ft")
+    except Exception as e:
+        print(f"DEBUG: Local inference failed: {e}, falling back to Groq...")
+    
+    # PRIORITY 2: Try Groq (if api keys configured)
     keys = _get_groq_keys()
     if keys:
         groq_model = req.modelOverride or os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
@@ -152,7 +178,7 @@ def _generate_impl(req: GenerateRequest, request: Request):
         
         # A) Try Pydantic AI Agent first
         try:
-            text = run_pydantic_ai_agent(req.actionType, prompt, model=groq_model, api_key=keys[0])
+            text = run_pydantic_ai_agent(req.actionType, prompt, model=groq_model, api_key=keys[0], target_language=req.targetLanguage)
             if text:
                 print("DEBUG: Success via Pydantic AI")
                 return GenerateResponse(ok=True, output=text, provider="groq+pydantic_ai", model=groq_model)
@@ -167,10 +193,9 @@ def _generate_impl(req: GenerateRequest, request: Request):
                 print("DEBUG: Success via Raw Groq")
                 return GenerateResponse(ok=True, output=text, provider="groq", model=used_model)
             except Exception as e_groq:
-                print(f"DEBUG: Groq failed: {e_groq}")
-                # Fall through to Ollama...
+                print(f"DEBUG: Groq failed: {e_groq}, falling back to Ollama...")
     
-    # 2) Fallback to Local Ollama
+    # PRIORITY 3: Fallback to Ollama
     print("DEBUG: Falling back to Ollama...")
     ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434/api/generate")
     ollama_model = os.getenv("OLLAMA_MODEL", "llama3.2:3b")

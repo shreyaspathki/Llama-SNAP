@@ -12,17 +12,14 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements
+# Copy gateway requirements
 COPY gateway/requirements.txt ./gateway/requirements.txt
-# If there is a root requirements.txt (e.g. for training deps that might be needed for inference like peft/bitsandbytes)
-COPY requirements.txt ./requirements.txt
 
 # Install Python dependencies
 # Update pip first
 RUN pip install --upgrade pip
 
 # Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache-dir -r gateway/requirements.txt
 
 # Copy source code

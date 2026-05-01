@@ -1,6 +1,6 @@
-# SNAP: simplify, narrate, adapt & personalise
+# Llama-SNAP: Simplify, Narrate, Adapt & Personalise
 
-SNAP is an intelligent browser extension designed to make the web more accessible for users with cognitive disabilities, language barriers, or reading difficulties. It leverages a fine-tuned Local Large Language Model (LLM) to simplify complex text, explain concepts, and provide translations in real-time, while ensuring privacy by processing data locally or through a secure gateway.
+Llama-SNAP is a browser accessibility project that helps users simplify complex text, get explanations, translate content, and improve reading comfort directly in the browser. The current design uses a Chrome extension UI, a FastAPI gateway, and a fine-tuned local Llama 3.2 3B Instruct model with LoRA adapters for task-specific behavior.
 
 ## 🚀 Key Features
 
@@ -9,30 +9,30 @@ SNAP is an intelligent browser extension designed to make the web more accessibl
 - **Explain**: Provides clear, context-aware explanations for difficult concepts.
 - **Summarize**: Condenses long articles into concise paragraphs.
 - **Expand**: Adds context and detail to brief text.
-- **Translate**: High-quality translation to **Hindi** and **Kannada**, optimized for natural sentence structure.
+- **Translate**: High-quality translation to **Hindi** and **Kannada**, optimized for natural sentence structure using Llama guidelines.
 
 ### 👁️ Visual Accessibility
 - **Dyslexia Friendly Font**: Toggles a specialized font (OpenDyslexic) to improve readability.
 - **High Contrast**: Increases contrast for users with low vision.
 - **Reading Ruler**: A horizontal guide to help users stay on the correct line.
-- **Focus Mode**: Dimming distractions to highlight only the paragraph being read.
+- **Color Vision Themes**: Protanopia, deuteranopia, and tritanopia support for color-blind users.
 
 ## 🏗️ Architecture
 
 The project consists of three main components:
 
-1.  **Chrome Extension**: The frontend interface (Popup & Sidebar) injected into web pages. It captures text and user preferences.
-2.  **AI Gateway (FastAPI)**: A local Python server that routes requests. It manages prompts and connects to the LLM.
+1.  **Chrome Extension**: The React/Vite-based popup, options page, background worker, and content script that handle user actions and page overlays.
+2.  **AI Gateway (FastAPI)**: A local Python server that receives requests from the extension and routes them to the selected provider.
 3.  **LLM Engine**:
-    - **Primary**: Local Llama 3.2 3B (Fine-Tuned with LoRA adapters for simplification/accessibility tasks).
-    - **Fallback**: Integration with Groq or Gemini APIs for higher throughput or backup.
+    - **Primary**: Local **Llama 3.2 3B Instruct** with LoRA adapters for simplification/accessibility tasks.
+    - **Fallback / Alternatives**: Groq, Ollama, or other configured providers depending on gateway settings.
 
 ## 🛠️ Installation & Setup
 
 ### Prerequisites
 - Python 3.10+
 - Node.js & npm (for building the extension)
-- NVIDIA GPU (Recommended for local inference) or sufficient RAM.
+- NVIDIA GPU is recommended for local inference, or enough RAM for CPU-only loading.
 
 ### 1. Backend Setup
 
@@ -50,13 +50,10 @@ pip install -r requirements.txt
 **Run the Server:**
 
 ```bash
-# If using Auto-Reload (Development)
-uvicorn main:app --reload
-
-# If stable (Production)
-uvicorn main:app
+python -m uvicorn gateway.app.main:app --reload
 ```
-(The API will start at http://localhost:8000)
+
+The API starts at http://localhost:8000.
 
 ### 2. Extension Setup
 
@@ -85,12 +82,16 @@ GROQ_API_KEY="your_groq_key"
 GEMINI_API_KEY="your_gemini_key"
 ```
 
+The gateway defaults to local inference when the extension asks for the local strategy. Cloud providers are optional fallbacks.
+
 ## 📖 Usage
 
 1.  **Activate**: Click the SNAP extension icon in your browser toolbar.
 2.  **Select Text**: Highlight any text on a webpage.
 3.  **Toolbar**: A floating toolbar will appear. Click "Simplify", "Explain", or "Translate".
 4.  **Fallback**: If no text is selected, SNAP can process the entire visible page content.
+
+The active extension build lives in `Extension/` and outputs to `Extension/dist/`. The old static UI files under `Extension/src/ui/` are legacy references and not the primary app entry points.
 
 ## 🤝 Contributing
 
