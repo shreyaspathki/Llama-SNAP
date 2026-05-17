@@ -57,6 +57,10 @@ export function SnapPopup() {
     focusMode: false,
     readingRuler: false,
   });
+  const [input, setInput] = useState('');
+  const [listening, setListening] = useState(false);
+  const recognitionRef = useRef<any | null>(null);
+  const speechSupported = typeof window !== 'undefined' && (('webkitSpeechRecognition' in window) || ('SpeechRecognition' in window));
 
   // Translation Helper
   const t = (k: keyof typeof en) => {
@@ -182,6 +186,43 @@ export function SnapPopup() {
           args: [key, value]
         });
       });
+    }
+  };
+
+  // --- Voice input (Speech-to-Text) ---
+  const toggleListening = () => {
+    if (!speechSupported) return;
+    if (listening) {
+      // stop
+      try {
+        recognitionRef.current?.stop();
+      } catch {}
+      setListening(false);
+      return;
+    }
+
+    const Rec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!Rec) return;
+    const r = new Rec();
+    recognitionRef.current = r;
+    r.lang = language || 'en-US';
+    r.interimResults = false;
+    r.maxAlternatives = 1;
+    r.onstart = () => setListening(true);
+    r.onend = () => setListening(false);
+    r.onerror = (e: any) => {
+      console.warn('Speech recognition error', e);
+      setListening(false);
+    };
+    r.onresult = (ev: any) => {
+      const text = Array.from(ev.results).map((res: any) => res[0].transcript).join(' ');
+      setInput(prev => (prev ? prev + ' ' + text : text));
+    };
+    try {
+      r.start();
+    } catch (e) {
+      console.warn('Failed to start speech recognition', e);
+      setListening(false);
     }
   };
 
@@ -441,9 +482,22 @@ function ChatView({ t }: { t: (k: any) => string }) {
       {/* Input row */}
       <div className="p-3 bg-white border-t border-zinc-100">
         <div className="flex gap-2 items-center bg-zinc-50 rounded-xl p-1.5 border border-zinc-200 focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500 transition-all">
-          <button className="p-2 rounded-lg text-zinc-400 hover:bg-zinc-100 transition-all" title="Voice input" style={{ '--hover-color': 'var(--snap-primary)' } as React.CSSProperties}>
-            <Mic size={18} />
-          </button>
+          {speechSupported ? (
+            <button
+              onClick={toggleListening}
+              className={`p-2 rounded-lg text-zinc-400 hover:bg-zinc-100 transition-all ${listening ? 'bg-emerald-50 text-emerald-600' : ''}`}
+              title={listening ? 'Listening...' : 'Voice input'}
+              style={{ '--hover-color': 'var(--snap-primary)' } as React.CSSProperties}
+            >
+              <Mic size={18} />
+            </button>
+          ) : (
+            <button
+              style={{ display: 'none' }}
+              className="p-2 rounded-lg text-zinc-400 hover:bg-zinc-100 transition-all"
+              title="Voice input not supported"
+            />
+          )}
           <input
             value={input}
             onChange={e => setInput(e.target.value)}
