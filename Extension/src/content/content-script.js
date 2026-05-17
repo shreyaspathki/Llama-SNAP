@@ -8,6 +8,13 @@ if (!window.snapContentScriptInjected) {
   let toolbarEl;
   let overlayHostEl; // host element for toolbar
   let overlayState = { mode: 'floating', minimized: false, position: { x: 20, y: 20 } };
+  const a11yToggleState = {};
+  let exportFileCount = 0;
+
+  function nextExportFilename(extension) {
+    exportFileCount += 1;
+    return exportFileCount === 1 ? `snap-export.${extension}` : `snap-export-${exportFileCount}.${extension}`;
+  }
 
   function sendMessage(msg) {
     return new Promise((resolve) => {
@@ -15,6 +22,33 @@ if (!window.snapContentScriptInjected) {
         chrome.runtime.sendMessage(msg, (res) => resolve(res));
       } else {
         resolve({});
+      }
+    });
+  }
+
+  // Fallback: read settings directly from chrome.storage if the service worker
+  // is not yet awake/responding (this can happen right after a page reload).
+  function readSettingsFromStorage() {
+    return new Promise((resolve) => {
+      try {
+        const defaults = {
+          language: 'en',
+          easyRead: false,
+          dyslexiaFont: false,
+          highContrast: false,
+          focusMode: false,
+          readingRuler: false,
+          fontScale: 1,
+        };
+        if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
+          chrome.storage.sync.get(defaults, items => {
+            resolve({ ...defaults, ...items });
+          });
+        } else {
+          resolve(defaults);
+        }
+      } catch (e) {
+        resolve({ language: 'en', easyRead: false, dyslexiaFont: false, highContrast: false, focusMode: false, readingRuler: false, fontScale: 1 });
       }
     });
   }
@@ -315,9 +349,9 @@ if (!window.snapContentScriptInjected) {
           <span class="toggle-dot"></span>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20z"/></svg>
         </button>
-        <button class="icon-btn" id="tog-focus" data-tip="Focus Mode">
+        <button class="icon-btn" id="tog-ruler" data-tip="Reading Ruler">
           <span class="toggle-dot"></span>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h16"/><path d="M4 16h16"/><path d="M8 8v4"/><path d="M12 8v4"/><path d="M16 8v4"/><path d="M10 16v-2"/><path d="M14 16v-2"/></svg>
         </button>
       </div>
 
@@ -344,10 +378,34 @@ if (!window.snapContentScriptInjected) {
     initDragAndDock(host);
     initEvents();
 
-    // Sync settings
-    sendMessage({ type: 'getSettings' }).then(res => {
-      if (res?.settings) syncOverlayControls(res.settings);
-    });
+    // Sync settings: prefer authoritative service-worker response but retry a few
+    // times in case the worker is still starting. If no response after retries,
+    // fall back to reading directly from chrome.storage.
+    (async function() {
+      async function tryGetSettings(retries = 3, delayMs = 200) {
+        for (let i = 0; i < retries; ++i) {
+          try {
+            const res = await sendMessage({ type: 'getSettings' });
+            if (res && res.settings) return res.settings;
+          } catch (e) {
+            // ignore and retry
+          }
+          // small backoff before next try
+          await new Promise(r => setTimeout(r, delayMs));
+        }
+        return null;
+      }
+
+      let settings = await tryGetSettings(3, 200);
+      if (!settings) {
+        settings = await readSettingsFromStorage();
+      }
+      if (settings) {
+        syncOverlayControls(settings);
+        // ensure page-level classes are applied even if we couldn't reach the service worker
+        applyAccessibility(settings);
+      }
+    })();
   }
 
   function destroyOverlay() {
@@ -572,26 +630,25 @@ if (!window.snapContentScriptInjected) {
       { id: 'tog-easy', key: 'easyRead' },
       { id: 'tog-dys', key: 'dyslexiaFont' },
       { id: 'tog-contrast', key: 'highContrast' },
-      { id: 'tog-focus', key: 'focusMode' },
+      { id: 'tog-ruler', key: 'readingRuler' },
     ];
 
-    const toggleState = {};
     toggles.forEach(t => {
-      toggleState[t.key] = false;
+      a11yToggleState[t.key] = false;
       const btn = q('#' + t.id);
       if (!btn) return;
       btn.addEventListener('click', () => {
-        toggleState[t.key] = !toggleState[t.key];
-        btn.classList.toggle('on', toggleState[t.key]);
-        sendMessage({ type: 'setSettings', patch: { [t.key]: toggleState[t.key] } });
-        applyAccessibility({ [t.key]: toggleState[t.key] });
+        a11yToggleState[t.key] = !a11yToggleState[t.key];
+        btn.classList.toggle('on', a11yToggleState[t.key]);
+        sendMessage({ type: 'setSettings', patch: { [t.key]: a11yToggleState[t.key] } });
+        applyAccessibility({ [t.key]: a11yToggleState[t.key] });
         // Update dot indicator on accessibility group button
         updateA11yDot();
       });
     });
 
     function updateA11yDot() {
-      const anyOn = Object.values(toggleState).some(v => v);
+      const anyOn = Object.values(a11yToggleState).some(v => v);
       grpA11y?.classList.toggle('has-active', anyOn);
     }
   }
@@ -602,11 +659,12 @@ if (!window.snapContentScriptInjected) {
       { id: 'tog-easy', key: 'easyRead' },
       { id: 'tog-dys', key: 'dyslexiaFont' },
       { id: 'tog-contrast', key: 'highContrast' },
-      { id: 'tog-focus', key: 'focusMode' },
+      { id: 'tog-ruler', key: 'readingRuler' },
     ];
     map.forEach(t => {
       const btn = q('#' + t.id);
       if (btn) btn.classList.toggle('on', !!settings[t.key]);
+      a11yToggleState[t.key] = !!settings[t.key];
     });
     // Update dot indicator on accessibility group button
     const anyOn = map.some(t => !!settings[t.key]);
@@ -635,6 +693,13 @@ if (!window.snapContentScriptInjected) {
        // From Popup -> trigger action in content script context
        const { actionType, payload } = msg;
        handleContentAction(actionType, payload);
+    }
+    if (msg.type === 'settingsUpdated') {
+      try {
+        const settings = msg.settings || {};
+        syncOverlayControls(settings);
+        applyAccessibility(settings);
+      } catch (e) {}
     }
     if (msg.type === 'snapA11yThemeChange') {
       applyWebpageA11yTheme(msg.theme);
@@ -879,7 +944,7 @@ if (!window.snapContentScriptInjected) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `snap-result-${Date.now()}.html`;
+      a.download = nextExportFilename('html');
       a.click();
     });
   }

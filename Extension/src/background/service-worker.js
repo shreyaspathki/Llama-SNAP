@@ -23,6 +23,15 @@ const DEFAULT_SETTINGS = {
   privacyOnlySelectedText: true
 };
 
+const exportCounts = new Map();
+
+function nextExportFilename(baseName, extension) {
+  const key = `${baseName}.${extension}`;
+  const count = (exportCounts.get(key) || 0) + 1;
+  exportCounts.set(key, count);
+  return count === 1 ? `${baseName}.${extension}` : `${baseName}-${count}.${extension}`;
+}
+
 async function getSettings() {
   return new Promise(resolve => {
     chrome.storage.sync.get(DEFAULT_SETTINGS, items => {
@@ -220,6 +229,20 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         }
         case 'setSettings': {
           const s = await setSettings(msg.patch || {});
+          // Broadcast updated settings to all tabs (content scripts) and to other extension contexts
+          try {
+            // Send to content scripts in all tabs
+            const tabs = await chrome.tabs.query({});
+            for (const tab of tabs) {
+              if (!tab.id || tab.url?.startsWith('chrome://') || tab.url?.startsWith('chrome-extension://')) continue;
+              try {
+                await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content/content-script.js'] });
+                chrome.tabs.sendMessage(tab.id, { type: 'settingsUpdated', settings: s }).catch(() => {});
+              } catch (_) {}
+            }
+            // Also notify other extension contexts (popup/options)
+            chrome.runtime.sendMessage({ type: 'settingsUpdated', settings: s });
+          } catch (_) {}
           sendResponse({ ok: true, settings: s });
           break;
         }
@@ -289,7 +312,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           try {
             const { dataUrl, filename } = msg;
             // Prefer silent download to default folder
-            const id = await chrome.downloads.download({ url: dataUrl, filename: filename || 'snap-output.pdf', saveAs: false });
+            const finalFilename = filename || nextExportFilename('snap-export', 'pdf');
+            const id = await chrome.downloads.download({ url: dataUrl, filename: finalFilename, saveAs: false });
             if (typeof id !== 'number') throw new Error('Download was not started');
             sendResponse({ ok: true });
           } catch (e) {

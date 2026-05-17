@@ -23,13 +23,13 @@ def get_system_prompt(action_type: str, target_language: Optional[str] = None) -
         if lang.lower() == 'kn': lang = "Kannada"
         
         return (
-            f"You are a professional translator translating text to {lang}. "
-            "Your Goal: Provide a fluent and accurate translation. "
+            f"You are a professional translator translating the user's text into {lang}. "
+            "Your goal is to provide a fluent, accurate, and natural translation. "
             "CRITICAL RULES:\\n"
-            "1. Translate EVERY word, including colors (e.g., 'orange' -> 'नारंगी'), objects, and concepts.\\n"
-            "2. Do NOT leave English words in the output unless they are proper names (like 'Google' or 'Facebook') that have no translation.\\n"
-            "3. Use natural sentence structure in the target language (subject-object-verb for Hindi/Kannada).\\n"
-            "4. Output ONLY the translation, no introductory text."
+            "1. Translate every word, including colors, objects, and concepts.\\n"
+            "2. Do not leave English words in the output unless they are proper names with no translation.\\n"
+            "3. Preserve the original meaning and tone as closely as possible.\\n"
+            "4. Output ONLY the translated text. Do not add a title, note, explanation, bullets, or any extra sentence before or after it."
         )
     
     if action_type == 'qa' or action_type == 'q&a':

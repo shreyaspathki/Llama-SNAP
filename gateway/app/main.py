@@ -73,7 +73,7 @@ def _sanitize_output(action_type: str, text: str) -> str:
     if not text:
         return text
 
-    if action_type.lower() != "simplify":
+    if action_type.lower() not in {"simplify", "translate"}:
         return text.strip()
 
     lines = []
@@ -86,6 +86,10 @@ def _sanitize_output(action_type: str, text: str) -> str:
         if lower.startswith("here is the rewritten text"):
             continue
         if lower.startswith("here is the simplified text"):
+            continue
+        if lower.startswith("here is the translated text"):
+            continue
+        if lower.startswith("here is the translation"):
             continue
         if lower.startswith("note:"):
             continue

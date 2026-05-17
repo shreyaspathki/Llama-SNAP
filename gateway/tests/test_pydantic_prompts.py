@@ -6,7 +6,7 @@ from app.providers.pydantic_ai_provider import get_system_prompt
 def test_translate_prompt_maps_hi_code() -> None:
     prompt = get_system_prompt("translate", target_language="hi")
     assert "Hindi" in prompt
-    assert "Output ONLY the translation" in prompt
+    assert "Output ONLY the translated text" in prompt
 
 
 def test_simplify_prompt_forbids_extra_wrappers() -> None:

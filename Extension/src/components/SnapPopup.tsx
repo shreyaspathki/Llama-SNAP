@@ -24,6 +24,7 @@ import {
 } from './ui/select';
 import { Switch } from './ui/switch';
 import { AccessibilityDropdown } from './ui/AccessibilityDropdown';
+import logoSnap from '../assets/logosnap.png';
 
 // Import Localization
 import en from '../ui/i18n/en.json';
@@ -230,7 +231,7 @@ export function SnapPopup() {
       <div className="bg-white border-b border-zinc-100 px-5 py-4 shrink-0 relative z-20">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
-            <img src={chrome.runtime.getURL('assets/logosnap.png')} alt="SNAP Logo" className="w-9 h-9 rounded-xl shadow-lg select-none" style={{ objectFit: 'contain' }} />
+            <img src={logoSnap} alt="SNAP Logo" className="w-9 h-9 rounded-xl shadow-lg select-none" style={{ objectFit: 'contain' }} />
             <div>
               <h1 className="text-lg font-bold text-zinc-900 tracking-tight leading-none">Llama-SNAP</h1>
             </div>
