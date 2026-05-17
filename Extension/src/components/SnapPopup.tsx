@@ -6,7 +6,6 @@ import {
   Type,
   BookOpen,
   Contrast,
-  Eye,
   Minus,
   Settings,
   Volume2,
