@@ -1,3 +1,6 @@
+
+![Llama SNAP logo](Extension/src/assets/logosnap.png)
+
 # Llama - SNAP: AI Browser Extension for Accessibility
 
 This repository implements Llama-SNAP, an accessibility-first browser extension that uses a local LLM to simplify, explain, translate, and otherwise adapt web content for users with reading or cognitive difficulties. The extension prioritizes privacy by default — user data and preferences are stored locally and the AI gateway can run locally as a FastAPI service.
@@ -69,4 +72,11 @@ Please open issues or PRs. Run local gateway inference tests before submitting m
 
 ## License
 MIT
+
+## Major Points
+- Goal: provide a single, privacy-first extension that improves comprehension (simplify/explain/translate) and visual readability for users with cognitive or visual difficulties.
+- Local-first model: primary inference runs locally (Llama 3.2 3B + LoRA). Cloud fallbacks (Groq/Gemini) are optional and configurable.
+- Privacy: user data and settings are stored locally using Chrome Storage; the FastAPI gateway is designed to run locally so content does not leave the user's device unless explicitly configured.
+- Integration: Shadow DOM overlay for a sandboxed UI, React popup for settings, background service worker for messaging, and content script to inject accessibility controls.
+- Testing & Validation: gateway unit tests are under `gateway/tests/` (run `pytest`). Rebuild extension with `npm run build` and load `dist` as unpacked in browser for manual testing.
 
