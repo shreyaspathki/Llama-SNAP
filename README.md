@@ -1,102 +1,72 @@
-# SNAP: simplify, narrate, adapt & personalise
+# Llama - SNAP: AI Browser Extension for Accessibility
 
-SNAP is an intelligent browser extension designed to make the web more accessible for users with cognitive disabilities, language barriers, or reading difficulties. It leverages a fine-tuned Local Large Language Model (LLM) to simplify complex text, explain concepts, and provide translations in real-time, while ensuring privacy by processing data locally or through a secure gateway.
+This repository implements Llama-SNAP, an accessibility-first browser extension that uses a local LLM to simplify, explain, translate, and otherwise adapt web content for users with reading or cognitive difficulties. The extension prioritizes privacy by default — user data and preferences are stored locally and the AI gateway can run locally as a FastAPI service.
 
-## 🚀 Key Features
+Project report: [/mnt/d/FYP/final_llama_snap_report.pdf](../final_llama_snap_report.pdf)
 
-### 🧠 Cognitive Accessibility (AI-Powered)
-- **Simplify**: Rewrites complex text into plain English (aimed at a 10-year-old reading level).
-- **Explain**: Provides clear, context-aware explanations for difficult concepts.
-- **Summarize**: Condenses long articles into concise paragraphs.
-- **Expand**: Adds context and detail to brief text.
-- **Translate**: High-quality translation to **Hindi** and **Kannada**, optimized for natural sentence structure.
+## Authors & Mentors
+- Shreyas Vasanth Kumar Pathki (01JST22UCS145)
+- Nishchal Venkatraman Naik (01JST22UCS098)
+- Pavan V (01JST22UCS106)
+- Arya Gowda S (01JST22UCS023)
 
-### 👁️ Visual Accessibility
-- **Dyslexia Friendly Font**: Toggles a specialized font (OpenDyslexic) to improve readability.
-- **High Contrast**: Increases contrast for users with low vision.
-- **Reading Ruler**: A horizontal guide to help users stay on the correct line.
-- **Focus Mode**: Dimming distractions to highlight only the paragraph being read.
+Supervision: Shwethashree G C (Assistant Professor, Dept. of CSE)
 
-## 🏗️ Architecture
+## Summary (from project report)
+SNAP injects a Shadow DOM toolbar into web pages to provide an insulated UI. A local FastAPI gateway routes requests to a local Llama-based model (Llama 3.2 3B with LoRA adapters) and provides fallback paths (Groq/Gemini) when configured. Key capabilities include text simplification, explanations, summarization, translation (Hindi & Kannada), dyslexia-friendly fonts, high-contrast themes, and a reading ruler.
 
-The project consists of three main components:
+## Key Features
+- Simplify, Explain, Summarize, Expand, Translate
+- Dyslexia-friendly font toggle and high-contrast themes
+- Reading ruler and focus/dimming modes to reduce visual distractions
+- Local-first model inference with optional secure cloud fallbacks
+- Privacy-oriented: user data is stored in `chrome.storage` and the gateway is local by default
 
-1.  **Chrome Extension**: The frontend interface (Popup & Sidebar) injected into web pages. It captures text and user preferences.
-2.  **AI Gateway (FastAPI)**: A local Python server that routes requests. It manages prompts and connects to the LLM.
-3.  **LLM Engine**:
-    - **Primary**: Local Llama 3.2 3B (Fine-Tuned with LoRA adapters for simplification/accessibility tasks).
-    - **Fallback**: Integration with Groq or Gemini APIs for higher throughput or backup.
+## Quickstart
 
-## 🛠️ Installation & Setup
-
-### Prerequisites
+Prerequisites:
 - Python 3.10+
-- Node.js & npm (for building the extension)
-- NVIDIA GPU (Recommended for local inference) or sufficient RAM.
+- Node.js & npm
 
-### 1. Backend Setup
-
-Navigate to the gateway folder and install dependencies:
-
+1) Backend (gateway)
 ```bash
 cd gateway
 pip install -r requirements.txt
-```
-
-**Model Setup:**
-1.  Download the **Llama 3.2 3B Instruct** base model.
-2.  Ensure your fine-tuned LoRA adapters are in `model_artifacts/llama-lora-v2` (or update paths in `.env`).
-
-**Run the Server:**
-
-```bash
-# If using Auto-Reload (Development)
+# Configure paths in gateway/.env
 uvicorn main:app --reload
-
-# If stable (Production)
-uvicorn main:app
 ```
-(The API will start at http://localhost:8000)
 
-### 2. Extension Setup
+2) Build and load the extension
+```bash
+cd Extension
+npm install
+npm run build
+# Load the produced `dist` into chrome://extensions → Load unpacked
+```
 
-1.  Navigate to the Extension folder:
-    ```bash
-    cd Extension
-    npm install
-    npm run build
-    ```
-2.  Open Chrome and go to `chrome://extensions`.
-3.  Enable **Developer Mode** (top right).
-4.  Click **Load unpacked**.
-5.  Select the `Extension/dist` (or `Extension` depending on build) folder.
+3) Run and test
+- Open any webpage, click the SNAP icon, or use the keyboard shortcut (Alt+X) to toggle the overlay. Select text and try "Simplify" or "Translate".
 
-## ⚙️ Configuration
+## Icons
+Canonical project icon: `src/assets/logosnap.png`. Size-specific icons (`src/assets/icon-16.png`, `icon-32.png`, `icon-48.png`, `icon-128.png`) are generated and included for crisp display in browser UI.
 
-Create a `.env` file in `gateway/`:
-
+## Configuration
+Create `gateway/.env` with at minimum:
 ```env
-# Local Model Paths
-LOCAL_MODEL_PATH="/path/to/llama3.2-3b-instruct"
-LOCAL_ADAPTER_PATH="/path/to/model_artifacts/llama-lora-v2"
-
-# Optional Cloud Fallbacks
-GROQ_API_KEY="your_groq_key"
-GEMINI_API_KEY="your_gemini_key"
+LOCAL_MODEL_PATH="/absolute/path/to/llama3.2-3b-instruct"
+LOCAL_ADAPTER_PATH="/absolute/path/to/model_artifacts/llama-lora-v2"
 ```
+Optional keys: `GROQ_API_KEY`, `GEMINI_API_KEY`.
 
-## 📖 Usage
+## Development notes
+- The popup React app entry is `index.html` → `src/popup-main.tsx` → `src/components/SnapPopup.tsx`.
+- Content script is `src/content/content-script.js` (injects Shadow DOM overlay).
+- Background service worker is `src/background/service-worker.js` and broadcasts settings to tabs.
+- Tests and model prompt validation are under `gateway/tests/` (run `pytest`).
 
-1.  **Activate**: Click the SNAP extension icon in your browser toolbar.
-2.  **Select Text**: Highlight any text on a webpage.
-3.  **Toolbar**: A floating toolbar will appear. Click "Simplify", "Explain", or "Translate".
-4.  **Fallback**: If no text is selected, SNAP can process the entire visible page content.
+## Contributing
+Please open issues or PRs. Run local gateway inference tests before submitting model-related changes.
 
-## 🤝 Contributing
-
-Contributions are welcome! Please ensure you test the local model inference before submitting PRs.
-
-## 📄 License
-
-MIT License
+## License
+MIT
 
